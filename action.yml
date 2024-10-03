@@ -1,0 +1,83 @@
+name: 'Tenderly Virtual TestNet Setup'
+description: 'Sets up a Tenderly Virtual TestNet and exposes RPC link as an environment variable'
+inputs:
+  access_key:
+    description: 'Tenderly API Access Key'
+    required: true
+  project_name:
+    description: 'Tenderly Project Name'
+    required: true
+  testnet_slug:
+    description: 'Slug for the Virtual TestNet'
+    required: true
+    default: 'ci_testnet'
+  testnet_name:
+    description: 'Display name for the Virtual TestNet'
+    required: true
+    default: 'CI TestNet'
+  network_id:
+    description: 'Network ID to fork'
+    required: true
+    default: '1'
+  block_number:
+    description: 'Block number to fork from (in hex)'
+    required: true
+    default: '0x13e772b'
+runs:
+  using: 'composite'
+  steps:
+    - name: Create Tenderly Virtual TestNet
+      shell: bash
+      run: |
+        RESPONSE=$(curl --silent --request POST \
+          --url "https://api.tenderly.co/api/v1/account/me/project/${{ inputs.project_name }}/vnets" \
+          --header 'Accept: application/json' \
+          --header 'Content-Type: application/json' \
+          --header 'X-Access-Key: ${{ inputs.access_key }}' \
+          --data '{
+            "slug": "${{ inputs.testnet_slug }}",
+            "display_name": "${{ inputs.testnet_name }}",
+            "fork_config": {
+              "network_id": ${{ inputs.network_id }},
+              "block_number": "${{ inputs.block_number }}"
+            },
+            "virtual_network_config": {
+              "chain_config": {
+                "chain_id": ${{ inputs.network_id }}
+              }
+            },
+            "sync_state_config": {
+              "enabled": false
+            },
+            "explorer_page_config": {
+              "enabled": false,
+              "verification_visibility": "bytecode"
+            }
+          }')
+        
+        echo "API Response: $RESPONSE"
+        
+        TESTNET_ID=$(echo $RESPONSE | jq -r '.id')
+        ADMIN_RPC_URL=$(echo $RESPONSE | jq -r '.rpcs[] | select(.name == "Admin RPC") | .url')
+        PUBLIC_RPC_URL=$(echo $RESPONSE | jq -r '.rpcs[] | select(.name == "Public RPC") | .url')
+        
+        if [ -z "$TESTNET_ID" ] || [ "$TESTNET_ID" == "null" ]; then
+          echo "Failed to create Virtual TestNet"
+          exit 1
+        fi
+        
+        echo "TENDERLY_TESTNET_ID=$TESTNET_ID" >> $GITHUB_ENV
+        echo "TENDERLY_ADMIN_RPC_URL=$ADMIN_RPC_URL" >> $GITHUB_ENV
+        echo "TENDERLY_PUBLIC_RPC_URL=$PUBLIC_RPC_URL" >> $GITHUB_ENV
+
+    - name: Output TestNet information
+      shell: bash
+      run: |
+        echo "Tenderly Virtual TestNet created successfully"
+        echo "TestNet ID: ${{ env.TENDERLY_TESTNET_ID }}"
+        echo "Admin RPC URL: ${{ env.TENDERLY_ADMIN_RPC_URL }}"
+        echo "Public RPC URL: ${{ env.TENDERLY_PUBLIC_RPC_URL }}"
+
+branding:
+  icon: 'cloud'
+  color: 'white'
