@@ -21,7 +21,7 @@ jobs:
           testnet_slug: 'ci_testnet'
           testnet_name: 'CI TestNet'
           network_id: '1'
-          block_number: '0x13e772b'
+          block_number: 'latest'
 
       - name: Test RPC URLs
         run: |

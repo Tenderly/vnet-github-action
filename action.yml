@@ -22,7 +22,7 @@ inputs:
   block_number:
     description: 'Block number to fork from (in hex)'
     required: true
-    default: '0x13e772b'
+    default: 'latest'
 runs:
   using: 'composite'
   steps:
