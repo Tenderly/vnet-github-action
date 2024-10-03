@@ -31,7 +31,7 @@ The action accepts the following inputs:
 - `testnet_slug`: Slug for the Virtual TestNet (default: 'ci_testnet')
 - `testnet_name`: Display name for the Virtual TestNet (default: 'CI TestNet')
 - `network_id`: Network ID to fork (default: '1')
-- `block_number`: Block number to fork from in hex (default: '0x13e772b')
+- `block_number`: Block number to fork from in hex (default: 'latest')
 
 
 ## Action Outputs
@@ -54,7 +54,7 @@ Make sure to replace `your_project_name`, `your_testnet_slug`, and other values 
 ## Requirements
 
 - GitHub repository
-- Tenderly account and API access key
+- Tenderly account and API access key ( How to create API access key can be found [here](https://docs.tenderly.co/account/projects/how-to-generate-api-access-token))
 - Appropriate permissions to run GitHub Actions
 
 ## Contributing
