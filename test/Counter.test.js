@@ -3,8 +3,10 @@ const { expect } = require("chai");
 
 describe("Counter", function () {
     it("should increment the count", async function () {
+
         let Counter = await ethers.getContractFactory("Counter");
         console.log("Deploying Counter contract...");
+
         let counter = await Counter.deploy();
         counter = await counter.waitForDeployment();
         console.log("Counter contract deployed at:", await counter.getAddress());

@@ -4,10 +4,6 @@ require("dotenv").config();
 const TENDERLY_RPC_URL = process.env.TENDERLY_ADMIN_RPC_URL;
 const TENDERLY_ACCESS_KEY = process.env.TENDERLY_ACCESS_KEY;
 
-console.log("q")
-console.log(TENDERLY_ACCESS_KEY);
-console.log("rac");
-
 module.exports = {
   solidity: "0.8.19",
   networks: {
