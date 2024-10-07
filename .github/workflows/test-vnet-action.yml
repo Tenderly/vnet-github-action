@@ -46,7 +46,12 @@ jobs:
           
       - name: Install dependencies
         run: npm install
-
+      
+      - name: Verify Tenderly configuration
+        run: |
+          ls -la /home/runner/.tenderly
+          cat /home/runner/.tenderly/config.yaml
+      
       - name: Run Hardhat tests on vnet
         run: npm run test:vnet
         env:

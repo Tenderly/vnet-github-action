@@ -77,6 +77,7 @@ runs:
         mkdir -p /home/runner/.tenderly
         echo "access_key: ${{ inputs.access_key }}" > /home/runner/.tenderly/config.yaml
         chmod 600 /home/runner/.tenderly/config.yaml
+        ls -la /home/runner/.tenderly
         cat /home/runner/.tenderly/config.yaml
 
     - name: Output TestNet information
