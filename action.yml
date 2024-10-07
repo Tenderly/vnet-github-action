@@ -71,9 +71,12 @@ runs:
         echo "TENDERLY_ADMIN_RPC_URL=$ADMIN_RPC_URL" >> $GITHUB_ENV
         echo "TENDERLY_PUBLIC_RPC_URL=$PUBLIC_RPC_URL" >> $GITHUB_ENV
         
-        touch /home/runner/.tenderly/config.yaml
-        chmod +rvx /home/runner/.tenderly/config.yaml
-        echo "access_key: ${{ inputs.access_key }}" >> config.yaml
+    - name: Create Tenderly config file
+      shell: bash
+      run: |
+        mkdir -p /home/runner/.tenderly
+        echo "access_key: ${{ inputs.access_key }}" > /home/runner/.tenderly/config.yaml
+        chmod 600 /home/runner/.tenderly/config.yaml
         cat /home/runner/.tenderly/config.yaml
 
     - name: Output TestNet information
