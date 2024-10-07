@@ -25,16 +25,24 @@ jobs:
 
       - name: Test RPC URLs
         run: |
-          echo "TestNet ID: ${{ env.TENDERLY_TESTNET_ID }}"
-          echo "Admin RPC URL: ${{ env.TENDERLY_ADMIN_RPC_URL }}"
-          echo "Public RPC URL: ${{ env.TENDERLY_PUBLIC_RPC_URL }}"
+          echo "TestNet ID: ${{ secrets.TENDERLY_TESTNET_ID }}"
+          echo "Admin RPC URL: ${{ secrets.TENDERLY_ADMIN_RPC_URL }}"
+          echo "Public RPC URL: ${{ secrets.TENDERLY_PUBLIC_RPC_URL }}"
           
           # Optional: Test the Admin RPC endpoint
-          curl -X POST ${{ env.TENDERLY_ADMIN_RPC_URL }} \
+          curl -X POST ${{ secrets.TENDERLY_ADMIN_RPC_URL }} \
             -H "Content-Type: application/json" \
             --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}'
           
           # Optional: Test the Public RPC endpoint
-          curl -X POST ${{ env.TENDERLY_PUBLIC_RPC_URL }} \
+          curl -X POST ${{ secrets.TENDERLY_PUBLIC_RPC_URL }} \
             -H "Content-Type: application/json" \
             --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}'
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Hardhat tests on vnet
+        run: npm run test:vnet
+        env:
+          TENDERLY_PUBLIC_RPC_URL: ${{ secrets.TENDERLY_PUBLIC_RPC_URL }}
+          PRIVATE_KEY: ${{ secrets.TENDERLY_ACCESS_KEY }}
