@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "hardhat test",
-    "test:vnet": "hardhat test --network vnet"
+    "test:vnet": "TENDERLY_AUTOMATIC_VERIFICATION=true hardhat test --network vnet"
   },
   "keywords": [],
   "author": "",
