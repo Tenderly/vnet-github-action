@@ -14,7 +14,7 @@ inputs:
   testnet_name:
     description: 'Display name for the Virtual TestNet'
     required: true
-    default: 'CI TestNet'
+    default: 'CI Virtual TestNet'
   network_id:
     description: 'Network ID to fork'
     required: true
@@ -50,7 +50,7 @@ runs:
               "enabled": false
             },
             "explorer_page_config": {
-              "enabled": false,
+              "enabled": true,
               "verification_visibility": "bytecode"
             }
           }')
