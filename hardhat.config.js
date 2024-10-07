@@ -1,5 +1,6 @@
 require("@nomicfoundation/hardhat-toolbox");
 require("dotenv").config();
+require("@tenderly/hardhat-tenderly");
 
 const TENDERLY_RPC_URL = process.env.TENDERLY_ADMIN_RPC_URL;
 const TENDERLY_ACCESS_KEY = process.env.TENDERLY_ACCESS_KEY;
