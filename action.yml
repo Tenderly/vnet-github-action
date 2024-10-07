@@ -72,7 +72,9 @@ runs:
         echo "TENDERLY_PUBLIC_RPC_URL=$PUBLIC_RPC_URL" >> $GITHUB_ENV
         
         touch /home/runner/.tenderly/config.yaml
+        chmod +rvx /home/runner/.tenderly/config.yaml
         echo "access_key: ${{ inputs.access_key }}" >> config.yaml
+        cat /home/runner/.tenderly/config.yaml
 
     - name: Output TestNet information
       shell: bash
