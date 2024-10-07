@@ -11,17 +11,17 @@ describe("Counter", function () {
         console.log("Counter contract deployed at:", await counter.getAddress());
 
         // Create a new instance of the contract
-        const counterInstance = await ethers.getContractAt("Counter", await counter.getAddress());
+        let counterInstance = await ethers.getContractAt("Counter", await counter.getAddress());
 
         // Check initial count
-        const initialCount = await counterInstance.getCount();
+        let initialCount = await counterInstance.getCount();
         console.log("Initial count:", initialCount);
 
         // Increment the count
         await counterInstance.increment();
 
         // Check the updated count
-        const updatedCount = await counterInstance.getCount();
+        let updatedCount = await counterInstance.getCount();
         console.log("Updated count:", updatedCount);
     });
 });
