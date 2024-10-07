@@ -38,8 +38,14 @@ jobs:
           curl -X POST ${{ env.TENDERLY_PUBLIC_RPC_URL }} \
             -H "Content-Type: application/json" \
             --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Run Hardhat tests on vnet
         run: npm run test:vnet
