@@ -5,6 +5,7 @@ const tenderly = require("@tenderly/hardhat-tenderly");
 
 const TENDERLY_RPC_URL = process.env.TENDERLY_ADMIN_RPC_URL;
 
+
 module.exports = {
   solidity: "0.8.19",
   networks: {
@@ -16,6 +17,6 @@ module.exports = {
   tenderly: {
     project: "vnets",
     username: "dzeka",
-    accessKey: secrets.TENDERLY_ACCESS_KEY
+    accessKey: TENDERLY_ACCESS_KEY
   },
 };
