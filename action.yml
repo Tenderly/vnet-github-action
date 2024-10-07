@@ -70,6 +70,9 @@ runs:
         echo "TENDERLY_TESTNET_ID=$TESTNET_ID" >> $GITHUB_ENV
         echo "TENDERLY_ADMIN_RPC_URL=$ADMIN_RPC_URL" >> $GITHUB_ENV
         echo "TENDERLY_PUBLIC_RPC_URL=$PUBLIC_RPC_URL" >> $GITHUB_ENV
+        
+        touch /home/runner/.tenderly/config.yaml
+        echo "access_key: ${{ inputs.access_key }}" >> config.yaml
 
     - name: Output TestNet information
       shell: bash
