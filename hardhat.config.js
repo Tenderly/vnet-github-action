@@ -19,6 +19,7 @@ module.exports = {
   tenderly: {
     project: "vnets",
     username: "dzeka",
-    accessKey: TENDERLY_ACCESS_KEY
+    accessKey: TENDERLY_ACCESS_KEY,
+    configPath: `${process.env.HOME}/.tenderly/config.yaml`
   },
 };

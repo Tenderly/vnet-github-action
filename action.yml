@@ -79,7 +79,8 @@ runs:
         chmod 600 /home/runner/.tenderly/config.yaml
         ls -la /home/runner/.tenderly
         cat /home/runner/.tenderly/config.yaml
-
+        echo "TENDERLY_ACCESS_KEY=${{ inputs.access_key }}" >> $GITHUB_ENV
+        
     - name: Output TestNet information
       shell: bash
       run: |

@@ -13,6 +13,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Create Tenderly config
+        run: |
+          mkdir -p $HOME/.tenderly
+          echo "access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}" > $HOME/.tenderly/config.yaml
+          chmod 600 $HOME/.tenderly/config.yaml
+          ls -la $HOME/.tenderly
+          cat $HOME/.tenderly/config.yaml
+
       - name: Set up Tenderly TestNet
         uses: Tenderly/vnet-github-action@v1.1
         with:
@@ -51,6 +59,8 @@ jobs:
         run: |
           ls -la /home/runner/.tenderly
           cat /home/runner/.tenderly/config.yaml
+          echo "TENDERLY_ACCESS_KEY: ${{ env.TENDERLY_ACCESS_KEY }}"
+          echo "TENDERLY_ADMIN_RPC_URL: ${{ env.TENDERLY_ADMIN_RPC_URL }}"
       
       - name: Run Hardhat tests on vnet
         run: npm run test:vnet
