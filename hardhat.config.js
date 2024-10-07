@@ -16,5 +16,6 @@ module.exports = {
   tenderly: {
     project: "vnets",
     username: "dzeka",
+    accessKey: secrets.TENDERLY_ACCESS_KEY
   },
 };
