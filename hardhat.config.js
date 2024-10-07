@@ -1,6 +1,7 @@
 require("@nomicfoundation/hardhat-toolbox");
 require("dotenv").config();
-import * as tenderly from "@tenderly/hardhat-tenderly";
+
+const tenderly = require("@tenderly/hardhat-tenderly");
 
 tenderly.setup({ automaticVerifications: true });
 
