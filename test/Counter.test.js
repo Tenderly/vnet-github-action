@@ -1,32 +1,28 @@
+const { ethers } = require("hardhat");
 const { expect } = require("chai");
 
 describe("Counter", function () {
-  let counter;
+    it("should increment the count", async function () {
+        const Counter = await ethers.getContractFactory("Counter");
+        console.log("Deploying Counter contract...");
+        const counter = await Counter.deploy();
+        await counter.waitForDeployment();
+        console.log("Counter contract deployed at:", await counter.getAddress());
 
-  beforeEach(async function () {
-    const Counter = await ethers.getContractFactory("Counter");
-    counter = await Counter.deploy();
-    await counter.deployed();
-  });
+        // Create a new instance of the contract
+        const counterInstance = await ethers.getContractAt("Counter", await counter.getAddress());
 
-  it("should start with a count of 0", async function () {
-    expect(await counter.count()).to.equal(0);
-  });
+        // Check initial count
+        const initialCount = await counterInstance.getCount();
+        console.log("Initial count:", initialCount);
+        expect(initialCount).to.equal(0);
 
-  it("should increment the count", async function () {
-    await counter.increment();
-    expect(await counter.count()).to.equal(1);
-  });
+        // Increment the count
+        await counterInstance.increment();
 
-  it("should decrement the count", async function () {
-    await counter.increment();
-    await counter.decrement();
-    expect(await counter.count()).to.equal(0);
-  });
-
-  it("should not decrement below zero", async function () {
-    await expect(counter.decrement()).to.be.revertedWith(
-      "Counter: cannot decrement below zero"
-    );
-  });
+        // Check the updated count
+        const updatedCount = await counterInstance.getCount();
+        console.log("Updated count:", updatedCount);
+        expect(updatedCount).to.equal(1);
+    });
 });

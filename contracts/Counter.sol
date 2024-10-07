@@ -13,7 +13,7 @@ contract Counter {
         _count -= 1;
     }
 
-    function count() public view returns (uint256) {
+    function getCount() public view returns (uint256) {
         return _count;
     }
 }

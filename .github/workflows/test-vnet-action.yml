@@ -50,5 +50,5 @@ jobs:
       - name: Run Hardhat tests on vnet
         run: npm run test:vnet
         env:
-          TENDERLY_PUBLIC_RPC_URL: ${{ env.TENDERLY_PUBLIC_RPC_URL }}
+          TENDERLY_PUBLIC_RPC_URL: ${{ env.TENDERLY_ADMIN_RPC_URL }}
           PRIVATE_KEY: ${{ secrets.TENDERLY_ACCESS_KEY }}
