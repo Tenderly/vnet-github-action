@@ -60,13 +60,13 @@ runs:
         TESTNET_ID=$(echo $RESPONSE | jq -r '.id')
         ADMIN_RPC_URL=$(echo $RESPONSE | jq -r '.rpcs[] | select(.name == "Admin RPC") | .url')
         PUBLIC_RPC_URL=$(echo $RESPONSE | jq -r '.rpcs[] | select(.name == "Public RPC") | .url')
-        TENDERLY_AUTOMATIC_VERIFICATION=true
         
         if [ -z "$TESTNET_ID" ] || [ "$TESTNET_ID" == "null" ]; then
           echo "Failed to create Virtual TestNet"
           exit 1
         fi
         
+        echo "TENDERLY_AUTOMATIC_VERIFICATION=true" >> $GITHUB_ENV
         echo "TENDERLY_TESTNET_ID=$TESTNET_ID" >> $GITHUB_ENV
         echo "TENDERLY_ADMIN_RPC_URL=$ADMIN_RPC_URL" >> $GITHUB_ENV
         echo "TENDERLY_PUBLIC_RPC_URL=$PUBLIC_RPC_URL" >> $GITHUB_ENV
