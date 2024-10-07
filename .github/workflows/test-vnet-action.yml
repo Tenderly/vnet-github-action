@@ -40,9 +40,9 @@ jobs:
             --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}'
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           
       - name: Install dependencies
         run: npm install
@@ -51,4 +51,4 @@ jobs:
         run: npm run test:vnet
         env:
           TENDERLY_PUBLIC_RPC_URL: ${{ env.TENDERLY_ADMIN_RPC_URL }}
-          TENDERLY_ACCESS_KEY: ${{ secrets.TENDERLY_ACCESS_KEY }}
+          access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}

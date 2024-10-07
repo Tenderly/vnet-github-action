@@ -60,7 +60,7 @@ runs:
         TESTNET_ID=$(echo $RESPONSE | jq -r '.id')
         ADMIN_RPC_URL=$(echo $RESPONSE | jq -r '.rpcs[] | select(.name == "Admin RPC") | .url')
         PUBLIC_RPC_URL=$(echo $RESPONSE | jq -r '.rpcs[] | select(.name == "Public RPC") | .url')
-        TENDERLY_AUTOMATIC_VERIFICATION=true
+        
         
         if [ -z "$TESTNET_ID" ] || [ "$TESTNET_ID" == "null" ]; then
           echo "Failed to create Virtual TestNet"
