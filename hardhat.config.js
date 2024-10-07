@@ -3,8 +3,6 @@ require("dotenv").config();
 
 const tenderly = require("@tenderly/hardhat-tenderly");
 
-tenderly.setup({ automaticVerifications: true });
-
 const TENDERLY_RPC_URL = process.env.TENDERLY_PUBLIC_RPC_URL;
 
 module.exports = {
