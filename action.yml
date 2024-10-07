@@ -74,9 +74,9 @@ runs:
       shell: bash
       run: |
         echo "Tenderly Virtual TestNet created successfully"
-        echo "TestNet ID: ${{ secrets.TENDERLY_TESTNET_ID }}"
-        echo "Admin RPC URL: ${{ secrets.TENDERLY_ADMIN_RPC_URL }}"
-        echo "Public RPC URL: ${{ secrets.TENDERLY_PUBLIC_RPC_URL }}"
+        echo "TestNet ID: ${{ env.TENDERLY_TESTNET_ID }}"
+        echo "Admin RPC URL: ${{ env.TENDERLY_ADMIN_RPC_URL }}"
+        echo "Public RPC URL: ${{ env.TENDERLY_PUBLIC_RPC_URL }}"
 
 branding:
   icon: 'cloud'
