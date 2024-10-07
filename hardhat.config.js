@@ -10,7 +10,7 @@ module.exports = {
   networks: {
     vnet: {
       url: TENDERLY_RPC_URL || "",
-      chainId: 1337, // Custom chain ID for the Virtual TestNet
+      chainId: 1, // Custom chain ID for the Virtual TestNet
     },
   },
   tenderly: {
