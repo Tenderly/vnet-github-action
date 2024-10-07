@@ -6,7 +6,7 @@ describe("Counter", function () {
         let Counter = await ethers.getContractFactory("Counter");
         console.log("Deploying Counter contract...");
         let counter = await Counter.deploy();
-        await counter.waitForDeployment();
+        counter = await counter.waitForDeployment();
         console.log("Counter contract deployed at:", await counter.getAddress());
 
         // Create a new instance of the contract
