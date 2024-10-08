@@ -6,7 +6,6 @@ const TENDERLY_RPC_URL = process.env.TENDERLY_ADMIN_RPC_URL;
 const TENDERLY_ACCESS_KEY = process.env.TENDERLY_ACCESS_KEY;
 
 console.log("TENDERLY_RPC_URL:", TENDERLY_RPC_URL);
-console.log("TENDERLY_ACCESS_KEY:", TENDERLY_ACCESS_KEY ? "Set" : "Not set");
 
 module.exports = {
   solidity: "0.8.19",

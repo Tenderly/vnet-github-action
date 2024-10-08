@@ -8,7 +8,7 @@ inputs:
     description: 'Tenderly Project Name'
     required: true
   testnet_slug:
-    description: 'Slug for the Virtual TestNet'
+    description: 'Slug for the Virtual TestNet (must be unique within project)'
     required: true
     default: 'ci_testnet'
   testnet_name:
@@ -16,20 +16,43 @@ inputs:
     required: true
     default: 'CI Virtual TestNet'
   network_id:
-    description: 'Network ID to fork'
+    description: 'Network ID to fork (e.g., 1 for Ethereum mainnet, 137 for Polygon)'
     required: true
     default: '1'
   block_number:
-    description: 'Block number to fork from (in hex)'
+    description: 'Block number to fork from (in hex or "latest")'
     required: true
     default: 'latest'
+
 runs:
   using: 'composite'
   steps:
+    - name: Check prerequisites
+      shell: bash
+      run: |
+        # Check if curl is installed
+        if ! command -v curl &> /dev/null; then
+          echo "::error::curl is not installed but required for API calls"
+          exit 1
+        fi
+        
+        # Check if jq is installed
+        if ! command -v jq &> /dev/null; then
+          echo "::error::jq is not installed but required for JSON parsing"
+          exit 1
+        fi
+        
+        # Validate access key format
+        if [ ${#{{ inputs.access_key }}} -lt 20 ]; then
+          echo "::error::Invalid access key format. Please check your Tenderly access key"
+          exit 1
+        fi
+
     - name: Create Tenderly Virtual TestNet
       shell: bash
       run: |
-        RESPONSE=$(curl --silent --request POST \
+        # Make API call with error handling
+        RESPONSE=$(curl --silent --show-error --fail-with-body \
           --url "https://api.tenderly.co/api/v1/account/me/project/${{ inputs.project_name }}/vnets" \
           --header 'Accept: application/json' \
           --header 'Content-Type: application/json' \
@@ -53,37 +76,87 @@ runs:
               "enabled": true,
               "verification_visibility": "bytecode"
             }
-          }')
+          }') || {
+            echo "::error::Failed to create Virtual TestNet. API call failed with status $?"
+            echo "Response: $RESPONSE"
+            exit 1
+          }
         
-        echo "API Response: $RESPONSE"
-        
-        TESTNET_ID=$(echo $RESPONSE | jq -r '.id')
-        ADMIN_RPC_URL=$(echo $RESPONSE | jq -r '.rpcs[] | select(.name == "Admin RPC") | .url')
-        PUBLIC_RPC_URL=$(echo $RESPONSE | jq -r '.rpcs[] | select(.name == "Public RPC") | .url')
-        
-        if [ -z "$TESTNET_ID" ] || [ "$TESTNET_ID" == "null" ]; then
-          echo "Failed to create Virtual TestNet"
+        # Check for error in response
+        if echo "$RESPONSE" | jq -e 'has("error")' > /dev/null; then
+          ERROR_MSG=$(echo "$RESPONSE" | jq -r '.error.message')
+          echo "::error::API returned error: $ERROR_MSG"
           exit 1
         fi
         
-        echo "TENDERLY_AUTOMATIC_VERIFICATION=true" >> $GITHUB_ENV
-        echo "TENDERLY_TESTNET_ID=$TESTNET_ID" >> $GITHUB_ENV
-        echo "TENDERLY_ADMIN_RPC_URL=$ADMIN_RPC_URL" >> $GITHUB_ENV
-        echo "TENDERLY_PUBLIC_RPC_URL=$PUBLIC_RPC_URL" >> $GITHUB_ENV
+        echo "API Response: $RESPONSE"
         
+        # Extract and validate required fields
+        TESTNET_ID=$(echo "$RESPONSE" | jq -r '.id')
+        ADMIN_RPC_URL=$(echo "$RESPONSE" | jq -r '.rpcs[] | select(.name == "Admin RPC") | .url')
+        PUBLIC_RPC_URL=$(echo "$RESPONSE" | jq -r '.rpcs[] | select(.name == "Public RPC") | .url')
+        
+        # Validate extracted values
+        if [ -z "$TESTNET_ID" ] || [ "$TESTNET_ID" == "null" ]; then
+          echo "::error::Failed to extract TestNet ID from response"
+          exit 1
+        fi
+        
+        if [ -z "$ADMIN_RPC_URL" ] || [ "$ADMIN_RPC_URL" == "null" ]; then
+          echo "::error::Failed to extract Admin RPC URL from response"
+          exit 1
+        fi
+        
+        if [ -z "$PUBLIC_RPC_URL" ] || [ "$PUBLIC_RPC_URL" == "null" ]; then
+          echo "::error::Failed to extract Public RPC URL from response"
+          exit 1
+        fi
+        
+        # Set environment variables
+        {
+          echo "TENDERLY_AUTOMATIC_VERIFICATION=true"
+          echo "TENDERLY_TESTNET_ID=$TESTNET_ID"
+          echo "TENDERLY_ADMIN_RPC_URL=$ADMIN_RPC_URL"
+          echo "TENDERLY_PUBLIC_RPC_URL=$PUBLIC_RPC_URL"
+        } >> $GITHUB_ENV
+
     - name: Create Tenderly config file
       shell: bash
       run: |
-        mkdir -p /home/runner/.tenderly
-        echo "access_key: ${{ inputs.access_key }}" > /home/runner/.tenderly/config.yaml
-        chmod 600 /home/runner/.tenderly/config.yaml
-        ls -la /home/runner/.tenderly
-        cat /home/runner/.tenderly/config.yaml
-        echo "TENDERLY_ACCESS_KEY=${{ inputs.access_key }}" >> $GITHUB_ENV
+        # Ensure directory exists and has correct permissions
+        if ! mkdir -p /home/runner/.tenderly; then
+          echo "::error::Failed to create Tenderly config directory"
+          exit 1
+        fi
         
+        # Create config file with proper permissions
+        if ! echo "access_key: ${{ inputs.access_key }}" > /home/runner/.tenderly/config.yaml; then
+          echo "::error::Failed to create config file"
+          exit 1
+        fi
+        
+        if ! chmod 600 /home/runner/.tenderly/config.yaml; then
+          echo "::error::Failed to set permissions on config file"
+          exit 1
+        fi
+        
+        # Verify file exists and has correct content
+        if [ ! -f /home/runner/.tenderly/config.yaml ]; then
+          echo "::error::Config file not found after creation"
+          exit 1
+        fi
+        
+        echo "TENDERLY_ACCESS_KEY=${{ inputs.access_key }}" >> $GITHUB_ENV
+
     - name: Output TestNet information
       shell: bash
       run: |
+        # Verify environment variables are set
+        if [ -z "$TENDERLY_TESTNET_ID" ] || [ -z "$TENDERLY_ADMIN_RPC_URL" ] || [ -z "$TENDERLY_PUBLIC_RPC_URL" ]; then
+          echo "::error::Required environment variables are not set"
+          exit 1
+        fi
+        
         echo "Tenderly Virtual TestNet created successfully"
         echo "TestNet ID: ${{ env.TENDERLY_TESTNET_ID }}"
         echo "Admin RPC URL: ${{ env.TENDERLY_ADMIN_RPC_URL }}"
