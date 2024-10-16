@@ -4,8 +4,8 @@ require("@tenderly/hardhat-tenderly");
 
 const TENDERLY_RPC_URL = process.env.TENDERLY_ADMIN_RPC_URL;
 const TENDERLY_ACCESS_KEY = process.env.TENDERLY_ACCESS_KEY;
-
-console.log("TENDERLY_RPC_URL:", TENDERLY_RPC_URL);
+const TENDERLY_PROJECT_SLUG = process.env.TENDERLY_PROJECT_SLUG;
+const TENDERLY_ACCOUNT_SLUG = process.env.TENDERLY_ACCOUNT_SLUG;
 
 module.exports = {
   solidity: "0.8.19",
@@ -16,8 +16,8 @@ module.exports = {
     },
   },
   tenderly: {
-    project: "vnets",
-    username: "dzeka",
+    project: TENDERLY_PROJECT_SLUG,
+    username: TENDERLY_ACCOUNT_SLUG,
     accessKey: TENDERLY_ACCESS_KEY,
     configPath: `${process.env.HOME}/.tenderly/config.yaml`
   },
