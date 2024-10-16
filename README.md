@@ -13,6 +13,19 @@ The primary purposes of this GitHub Action are:
 3. **CI/CD Integration**: Seamlessly integrate blockchain testing into your continuous integration and deployment pipelines.
 4. **Flexible Configuration**: Allow easy customization of the TestNet parameters to suit different project needs.
 
+## Using this Template
+
+1. Click the "Use this template" button on GitHub to create a new repository from this template.
+2. Clone your new repository to your local machine.
+3. Update the `hardhat.config.js` file with your Tenderly project information.
+4. Set up the following secrets in your GitHub repository:
+   - TENDERLY_ACCESS_KEY
+   - TENDERLY_PROJECT_SLUG
+   - TENDERLY_ACCOUNT_SLUG
+5. Customize the contracts in the `contracts/` directory as needed for your project.
+6. Update the deployment script in `scripts/deploy.js` if necessary.
+7. Modify the test files in the `test/` directory to suit your contracts.
+
 ## Workflow Details
 
 The workflow is defined in `.github/workflows/test-vnet-action.yml` and includes the following key steps:
