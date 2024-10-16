@@ -78,7 +78,7 @@ jobs:
           PROJECT_SLUG=$(echo "${{ inputs.project_name }}" | cut -d'/' -f2)
           
           RESPONSE=$(curl --silent --show-error --fail-with-body \
-            --location --request PATCH "https://api.tenderly.co/api/v1/account/${ACCOUNT_SLUG}/project/${PROJECT_SLUG}/vnets/${{ env.TENDERLY_TESTNET_ID }}" \
+            --location --request PATCH "https://api.tenderly.co/api/v1/account/dzeka/project/vnets/vnets/${{ env.TENDERLY_TESTNET_ID }}" \
             --header 'Accept: application/json' \
             --header 'X-Access-Key: ${{ secrets.TENDERLY_ACCESS_KEY }}' \
             --header 'Content-Type: application/json' \
