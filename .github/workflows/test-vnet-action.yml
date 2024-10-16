@@ -22,7 +22,6 @@ jobs:
           cat $HOME/.tenderly/config.yaml
 
       - name: Set up Tenderly TestNet
-
         with:
           access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
           project_name: 'vnets'
@@ -67,3 +66,5 @@ jobs:
         env:
           TENDERLY_PUBLIC_RPC_URL: ${{ env.TENDERLY_ADMIN_RPC_URL }}
           TENDERLY_ACCESS_KEY: ${{ secrets.TENDERLY_ACCESS_KEY }}
+
+      

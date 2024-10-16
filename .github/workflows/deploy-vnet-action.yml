@@ -20,7 +20,7 @@ jobs:
           cat $HOME/.tenderly/config.yaml
 
       - name: Set up Tenderly TestNet
-        uses: tenderly/tenderly-actions/testnet@v1
+        uses: Tenderly/vnet-github-action@v1.1
         with:
           access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
           project_name: 'vnets'
@@ -51,7 +51,7 @@ jobs:
           TENDERLY_ACCESS_KEY: ${{ secrets.TENDERLY_ACCESS_KEY }}
 
       - name: Store deployment artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: deployment-artifacts
           path: deployment.json
