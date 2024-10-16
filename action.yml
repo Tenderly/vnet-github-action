@@ -118,6 +118,7 @@ runs:
           echo "TENDERLY_TESTNET_ID=$TESTNET_ID"
           echo "TENDERLY_ADMIN_RPC_URL=$ADMIN_RPC_URL"
           echo "TENDERLY_PUBLIC_RPC_URL=$PUBLIC_RPC_URL"
+          echo "TENDERLY_FOUNDRY_VERIFICATION_URL=$PUBLIC_RPC_URL/verify/etherscan"
         } >> $GITHUB_ENV
 
     - name: Create Tenderly config file
@@ -161,6 +162,28 @@ runs:
         echo "TestNet ID: ${{ env.TENDERLY_TESTNET_ID }}"
         echo "Admin RPC URL: ${{ env.TENDERLY_ADMIN_RPC_URL }}"
         echo "Public RPC URL: ${{ env.TENDERLY_PUBLIC_RPC_URL }}"
+    
+    - name: Stop Tenderly Virtual TestNet
+      shell: bash
+      run: |
+        ACCOUNT_SLUG=$(echo "${{ inputs.account_name }}" | cut -d'/' -f1)
+        PROJECT_SLUG=$(echo "${{ inputs.project_name }}" | cut -d'/' -f2)
+        
+        RESPONSE=$(curl --silent --show-error --fail-with-body \
+          --location --request PATCH "https://api.tenderly.co/api/v1/account/${ACCOUNT_SLUG}/project/${PROJECT_SLUG}/vnets/${{ env.TENDERLY_TESTNET_ID }}" \
+          --header 'Accept: application/json' \
+          --header 'X-Access-Key: ${{ inputs.access_key }}' \
+          --header 'Content-Type: application/json' \
+          --data '{
+              "status": "stopped"
+          }')
+        
+        if echo "$RESPONSE" | jq -e 'has("error")' > /dev/null; then
+          ERROR_MSG=$(echo "$RESPONSE" | jq -r '.error.message')
+          echo "::warning::Failed to stop Virtual TestNet: $ERROR_MSG"
+        else
+          echo "Virtual TestNet stopped successfully"
+        fi
 
 branding:
   icon: 'cloud'

@@ -41,12 +41,19 @@ The action sets the following environment variables:
 - `TENDERLY_TESTNET_ID`: The ID of the created TestNet
 - `TENDERLY_ADMIN_RPC_URL`: The Admin RPC URL for the TestNet
 - `TENDERLY_PUBLIC_RPC_URL`: The Public RPC URL for the TestNet
+- `TENDERLY_FOUNDRY_VERIFICATION_URL`: The URL for Foundry contract verification
 
 ## How It Works
 
 1. The action uses the Tenderly API to create a new Virtual TestNet based on the provided inputs.
 2. It then extracts the TestNet ID and RPC URLs from the API response.
 3. These values are set as environment variables for use in subsequent steps of your workflow.
+
+## Additional Features
+
+1. **Foundry Contract Verification**: The action provides a URL for Foundry contract verification, available as the `TENDERLY_FOUNDRY_VERIFICATION_URL` environment variable.
+
+2. **Automatic VNet Shutdown**: To optimize resource usage and reduce billing, the action automatically stops the Virtual TestNet after the workflow completes.
 
 
 Make sure to replace `your_project_name`, `your_testnet_slug`, and other values as needed for your project.
