@@ -24,7 +24,7 @@ jobs:
       - name: Set up Tenderly TestNet
         with:
           access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
-          project_name: 'vnets'
+          project_name: ${{ secrets.TENDERLY_PROJECT_SLUG }}
           testnet_slug: 'ci_testnet'
           testnet_name: 'CI TestNet'
           network_id: '1'

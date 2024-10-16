@@ -48,7 +48,7 @@ jobs:
         run: npm run deploy:vnet
         env:
           TENDERLY_PUBLIC_RPC_URL: ${{ env.TENDERLY_ADMIN_RPC_URL }}
-          TENDERLY_ACCESS_KEY: ${{ secrets.TENDERLY_ACCESS_KEY }}
+          TENDERLY_ACCESS_KEY: ${{ env.TENDERLY_ACCESS_KEY }}
 
       - name: Store deployment artifacts
         uses: actions/upload-artifact@v4
