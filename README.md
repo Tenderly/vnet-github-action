@@ -89,7 +89,7 @@ Contributions to improve this action are welcome. Please follow these steps:
 
 ## License
 
-[We need info here, not sure what should be placed]
+https://github.com/Tenderly/vnet-github-action?tab=readme-ov-file#license
 
 ## Support
 
