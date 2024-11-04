@@ -1,5 +1,5 @@
 # Tenderly Virtual TestNet GitHub Action
-# VNet Action Test
+
 ## Overview
 
 This repository contains a GitHub Action that sets up a Tenderly Virtual TestNet for blockchain development and testing. It's designed to automate the process of creating a virtual testnet environment, making it easier to test smart contracts and blockchain applications in a controlled setting.
