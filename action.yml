@@ -7,6 +7,9 @@ inputs:
   project_name:
     description: 'Tenderly Project Name'
     required: true
+  account_name:
+    description: 'Tenderly Project Name'
+    required: true
   testnet_slug:
     description: 'Slug for the Virtual TestNet (must be unique within project)'
     required: true
@@ -167,9 +170,9 @@ runs:
       shell: bash
       run: |        
         RESPONSE=$(curl --silent --show-error --fail-with-body \
-          --location --request PATCH "https://api.tenderly.co/api/v1/account/${{ secrets.TENDERLY_ACCOUNT_SLUG }}/project/${{ secrets.TENDERLY_PROJECT_SLUG }}/vnets/${{ env.TENDERLY_TESTNET_ID }}" \
+          --location --request PATCH "https://api.tenderly.co/api/v1/account/${{ inputs.account_name }}/project/${{ inputs.project_name }}/vnets/${{ env.TENDERLY_TESTNET_ID }}" \
           --header 'Accept: application/json' \
-          --header 'X-Access-Key: ${{ secrets.TENDERLY_ACCESS_KEY }}' \
+          --header 'X-Access-Key: ${{ inputs.access_key }}' \
           --header 'Content-Type: application/json' \
           --data '{
               "status": "stopped"
