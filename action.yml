@@ -46,7 +46,8 @@ runs:
         fi
         
         # Validate access key format
-        if [ ${#{{ inputs.access_key }}} -lt 20 ]; then
+        ACCESS_KEY="${{ inputs.access_key }}"
+        if [ ${#ACCESS_KEY} -lt 20 ]; then
           echo "::error::Invalid access key format. Please check your Tenderly access key"
           exit 1
         fi
