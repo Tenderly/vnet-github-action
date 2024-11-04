@@ -28,11 +28,12 @@ The primary purposes of this GitHub Action are:
 
 ## Workflow Details
 
-The workflow is defined in `.github/workflows/test-vnet-action.yml` and includes the following key steps:
+The example workflow is defined in `.github/workflows/deploy-vnet-action.yml` and includes the following key steps:
 
 1. Checkout the repository
-2. Set up the Tenderly TestNet
+2. Set up the Tenderly Virtual TestNet
 3. Test the RPC URLs
+4. Deploy sample contract to Tenderly Virtual TestNet
 
 
 ## Action Inputs
@@ -41,6 +42,7 @@ The action accepts the following inputs:
 
 - `access_key`: Tenderly API Access Key (required)
 - `project_name`: Tenderly Project Name (required)
+- `account_name`: Tenderly Account Name (required)
 - `testnet_slug`: Slug for the Virtual TestNet (default: 'ci_testnet')
 - `testnet_name`: Display name for the Virtual TestNet (default: 'CI TestNet')
 - `network_id`: Network ID to fork (default: '1')
