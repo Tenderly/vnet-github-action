@@ -8,7 +8,7 @@ inputs:
     description: 'Tenderly Project Name'
     required: true
   account_name:
-    description: 'Tenderly Project Name'
+    description: 'Tenderly Account Name'
     required: true
   testnet_slug:
     description: 'Slug for the Virtual TestNet (must be unique within project)'
