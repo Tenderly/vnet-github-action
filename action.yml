@@ -38,6 +38,7 @@ runs:
       run: |
         echo "TENDERLY_ACCOUNT_NAME=${{ inputs.account_name }}" >> $GITHUB_ENV
         echo "TENDERLY_PROJECT_NAME=${{ inputs.project_name }}" >> $GITHUB_ENV
+        echo "TENDERLY_ACCESS_KEY=${{ inputs.access_key }}" >> $GITHUB_ENV
     - name: Check prerequisites
       shell: bash
       run: |
@@ -196,15 +197,11 @@ post:
     - name: Stop Tenderly Virtual TestNet
       if: always()
       shell: bash
-      env:
-        TENDERLY_ACCOUNT_NAME: ${{ inputs.account_name }}
-        TENDERLY_PROJECT_NAME: ${{ inputs.project_name }}
-        TENDERLY_ACCESS_KEY: ${{ inputs.access_key }}
       run: |        
         RESPONSE=$(curl --silent --show-error --fail-with-body \
-          --location --request PATCH "https://api.tenderly.co/api/v1/account/${TENDERLY_ACCOUNT_NAME}/project/${TENDERLY_PROJECT_NAME}/vnets/${TENDERLY_TESTNET_ID}" \
+          --location --request PATCH "https://api.tenderly.co/api/v1/account/$TENDERLY_ACCOUNT_NAME/project/$TENDERLY_PROJECT_NAME/vnets/$TENDERLY_TESTNET_ID" \
           --header 'Accept: application/json' \
-          --header 'X-Access-Key: ${TENDERLY_ACCESS_KEY}' \
+          --header 'X-Access-Key: $TENDERLY_ACCESS_KEY' \
           --header 'Content-Type: application/json' \
           --data '{
               "status": "stopped"
