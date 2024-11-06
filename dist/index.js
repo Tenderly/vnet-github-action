@@ -36093,12 +36093,15 @@ async function run() {
     core.exportVariable('TENDERLY_ADMIN_RPC_URL', testNet.adminRpcUrl);
     core.exportVariable('TENDERLY_PUBLIC_RPC_URL', testNet.publicRpcUrl);
     core.exportVariable('TENDERLY_TESTNET_SLUG', inputs.testnetSlug);
+    core.exportVariable('TENDERLY_CHAIN_ID', inputs.chainId);
     
     await setupTenderlyConfig(inputs.accessKey);
 
     core.info('Tenderly Virtual TestNet created successfully');
     core.info(`TestNet ID: ${testNet.id}`);
     core.info(`TestNet Slug: ${inputs.testnetSlug}`);
+    core.info(`Admin RPC URL: ${testNet.adminRpcUrl}`);
+    core.info(`Public RPC URL: ${testNet.publicRpcUrl}`);
   } catch (error) {
     core.setFailed(error.message);
   }
