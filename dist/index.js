@@ -36020,12 +36020,12 @@ function generateSlug(testnetName) {
 
 function validateInputs(inputs) {
   const requiredInputs = {
-    access_key: { required: true },
-    project_name: { required: true },
-    account_name: { required: true },
-    testnet_name: { required: true },
-    network_id: { required: true, isNumeric: true },
-    block_number: { required: true }
+    accessKey: { required: true },
+    projectName: { required: true },
+    accountName: { required: true },
+    testnetName: { required: true },
+    networkId: { required: true, isNumeric: true },
+    blockNumber: { required: true }
   };
 
   Object.entries(requiredInputs).forEach(([key, rules]) => {
