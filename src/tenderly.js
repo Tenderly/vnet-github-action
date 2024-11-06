@@ -1,8 +1,8 @@
+const core = require('@actions/core');
 const axios = require('axios');
 const path = require('path');
 const os = require('os');
 const fs = require('fs').promises;
-const { logger } = require('./utils/logger');
 
 const API_BASE_URL = 'https://api.tenderly.co/api/v1';
 const CONFIG_FILE_MODE = 0o600;
@@ -13,6 +13,7 @@ const RPC_TYPES = {
 
 async function createVirtualTestNet(inputs) {
   try {
+    core.debug('Creating Virtual TestNet...');
     const timestamp = Math.floor(Date.now() / 1000);
     const slug = `${inputs.testnetSlug}-${timestamp}`;
 
@@ -60,9 +61,8 @@ async function createVirtualTestNet(inputs) {
 
   } catch (error) {
     if (error.response) {
-      // API error response
       const message = error.response.data.error?.message || error.response.data;
-      throw new Error(`Tenderly API Error: ${message}`);
+      throw new Error(`Failed to create TestNet: ${message}`);
     }
     throw error;
   }

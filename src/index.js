@@ -1,5 +1,5 @@
 const core = require('@actions/core');
-const { logger } = require('./logger');
+const { createVirtualTestNet, setupTenderlyConfig } = require('./tenderly');
 
 function validateInputs(inputs) {
   const requiredInputs = {
@@ -25,6 +25,40 @@ function validateInputs(inputs) {
     }
   });
 
-  logger.debug('Input validation passed');
+  core.debug('Input validation passed');
   return true;
 }
+
+async function run() {
+  try {
+    const inputs = {
+      accessKey: core.getInput('access_key', { required: true }),
+      projectName: core.getInput('project_name', { required: true }),
+      accountName: core.getInput('account_name', { required: true }),
+      testnetSlug: core.getInput('testnet_slug'),
+      testnetName: core.getInput('testnet_name'),
+      networkId: core.getInput('network_id'),
+      chainId: core.getInput('chain_id'),
+      blockNumber: core.getInput('block_number')
+    };
+
+    validateInputs(inputs);
+
+    const testNet = await createVirtualTestNet(inputs);
+    
+    core.exportVariable('TENDERLY_TESTNET_ID', testNet.id);
+    core.exportVariable('TENDERLY_ACCOUNT_NAME', inputs.accountName);
+    core.exportVariable('TENDERLY_PROJECT_NAME', inputs.projectName);
+    core.exportVariable('TENDERLY_ADMIN_RPC_URL', testNet.adminRpcUrl);
+    core.exportVariable('TENDERLY_PUBLIC_RPC_URL', testNet.publicRpcUrl);
+    
+    await setupTenderlyConfig(inputs.accessKey);
+
+    core.info('Tenderly Virtual TestNet created successfully');
+    core.info(`TestNet ID: ${testNet.id}`);
+  } catch (error) {
+    core.setFailed(error.message);
+  }
+}
+
+run();
