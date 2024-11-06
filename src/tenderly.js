@@ -1,5 +1,8 @@
 const core = require('@actions/core');
 const axios = require('axios');
+const path = require('path');
+const os = require('os');
+const fs = require('fs/promises');
 
 const API_BASE_URL = 'https://api.tenderly.co/api/v1';
 
@@ -101,7 +104,7 @@ async function setupTenderlyConfig(accessKey) {
     await fs.writeFile(configFile, `access_key: ${accessKey}`);
     await fs.chmod(configFile, CONFIG_FILE_MODE);
     
-    logger.debug('Tenderly config file created successfully');
+    core.debug('Tenderly config file created successfully');
   } catch (error) {
     throw new Error(`Failed to create Tenderly config: ${error.message}`);
   }

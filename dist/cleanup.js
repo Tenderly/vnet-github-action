@@ -29155,6 +29155,9 @@ module.exports = {
 
 const core = __nccwpck_require__(7484);
 const axios = __nccwpck_require__(7269);
+const path = __nccwpck_require__(6928);
+const os = __nccwpck_require__(857);
+const fs = __nccwpck_require__(1943);
 
 const API_BASE_URL = 'https://api.tenderly.co/api/v1';
 
@@ -29256,7 +29259,7 @@ async function setupTenderlyConfig(accessKey) {
     await fs.writeFile(configFile, `access_key: ${accessKey}`);
     await fs.chmod(configFile, CONFIG_FILE_MODE);
     
-    logger.debug('Tenderly config file created successfully');
+    core.debug('Tenderly config file created successfully');
   } catch (error) {
     throw new Error(`Failed to create Tenderly config: ${error.message}`);
   }
@@ -29374,6 +29377,14 @@ module.exports = require("events");
 
 "use strict";
 module.exports = require("fs");
+
+/***/ }),
+
+/***/ 1943:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("fs/promises");
 
 /***/ }),
 
