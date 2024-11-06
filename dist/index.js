@@ -29158,7 +29158,13 @@ const path = __nccwpck_require__(6928);
 const os = __nccwpck_require__(857);
 const fs = (__nccwpck_require__(9896).promises);
 const { logger } = __nccwpck_require__(8467);
-const { API_BASE_URL, CONFIG_FILE_MODE, RPC_TYPES } = __nccwpck_require__(37);
+
+const API_BASE_URL = 'https://api.tenderly.co/api/v1';
+const CONFIG_FILE_MODE = 0o600;
+const RPC_TYPES = {
+  ADMIN: 'Admin RPC',
+  PUBLIC: 'Public RPC'
+};
 
 async function createVirtualTestNet(inputs) {
   try {
@@ -29289,14 +29295,6 @@ class Logger {
 module.exports = {
   logger: new Logger()
 };
-
-/***/ }),
-
-/***/ 37:
-/***/ ((module) => {
-
-module.exports = eval("require")("./utils/constants");
-
 
 /***/ }),
 

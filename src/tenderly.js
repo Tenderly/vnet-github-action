@@ -3,7 +3,13 @@ const path = require('path');
 const os = require('os');
 const fs = require('fs').promises;
 const { logger } = require('./utils/logger');
-const { API_BASE_URL, CONFIG_FILE_MODE, RPC_TYPES } = require('./utils/constants');
+
+const API_BASE_URL = 'https://api.tenderly.co/api/v1';
+const CONFIG_FILE_MODE = 0o600;
+const RPC_TYPES = {
+  ADMIN: 'Admin RPC',
+  PUBLIC: 'Public RPC'
+};
 
 async function createVirtualTestNet(inputs) {
   try {
