@@ -4,9 +4,10 @@
   "description": "GitHub Action that sets up a Tenderly Virtual TestNet for blockchain development and testing",
   "main": "dist/index.js",
   "scripts": {
-    "build": "ncc build src/index.js -o dist --source-map --license licenses.txt",
-    "build:cleanup": "ncc build src/cleanup.js -o dist --source-map --license licenses.txt",
-    "build:all": "npm run build && npm run build:cleanup",
+    "prebuild": "rm -rf dist/",
+    "build:main": "ncc build src/index.js -o dist --source-map --license licenses.txt",
+    "build:cleanup": "ncc build src/cleanup.js -o dist/temp --source-map && mv dist/temp/index.js dist/cleanup.js && rm -rf dist/temp",
+    "build:all": "npm run prebuild && npm run build:main && npm run build:cleanup",
     "prepare": "npm run build:all",
     "test": "jest",
     "lint": "eslint ."
