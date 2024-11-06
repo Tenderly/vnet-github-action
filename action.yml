@@ -91,7 +91,7 @@ runs:
             },
             "virtual_network_config": {
               "chain_config": {
-                "chain_id": '"${{ env.TENDERLY_CHAIN_ID }}"'
+                "chain_id": '"${CHAIN_ID}"'
               }
             },
             "sync_state_config": {
