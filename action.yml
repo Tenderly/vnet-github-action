@@ -187,33 +187,32 @@ runs:
         echo "TestNet ID: ${{ env.TENDERLY_TESTNET_ID }}"
         echo "Admin RPC URL: ${{ env.TENDERLY_ADMIN_RPC_URL }}"
         echo "Public RPC URL: ${{ env.TENDERLY_PUBLIC_RPC_URL }}"
-    
-    - name: Setup pause for Tenderly Virtual TestNet
-      if: success()
-      shell: bash
-      run: |
-        echo "CLEANUP_REQUIRED=true" >> $GITHUB_ENV
-        echo "Cleanup registered for TestNet ID: ${{ env.TENDERLY_TESTNET_ID }}"
-
-    - name: Pause Tenderly Virtual TestNet
-      if: env.CLEANUP_REQUIRED == 'true'
-      shell: bash
-      run: |
-        RESPONSE=$(curl --silent --show-error --fail-with-body \
-          --location --request PATCH "https://api.tenderly.co/api/v1/account/${{ env.TENDERLY_ACCOUNT_NAME }}/project/${{ env.TENDERLY_PROJECT_NAME }}/vnets/${{ env.TENDERLY_TESTNET_ID }}" \
-          --header 'Accept: application/json' \
-          --header 'X-Access-Key: ${{ inputs.access_key }}' \
-          --header 'Content-Type: application/json' \
-          --data '{
-              "status": "stopped"
-          }')
-        
-        if echo "$RESPONSE" | jq -e 'has("error")' > /dev/null; then
-          ERROR_MSG=$(echo "$RESPONSE" | jq -r '.error.message')
-          echo "::warning::Failed to stop Virtual TestNet: $ERROR_MSG"
-        else
-          echo "Virtual TestNet stopped successfully"
-        fi
+  post: # Add this section for post-job cleanup
+    using: 'composite'
+    steps:
+      - name: Cleanup Tenderly Virtual TestNet
+        if: always() # This ensures it runs even if the job fails
+        shell: bash
+        run: |
+          if [ ! -z "$TENDERLY_TESTNET_ID" ]; then
+            RESPONSE=$(curl --silent --show-error --fail-with-body \
+              --location --request PATCH "https://api.tenderly.co/api/v1/account/$TENDERLY_ACCOUNT_NAME/project/$TENDERLY_PROJECT_NAME/vnets/$TENDERLY_TESTNET_ID" \
+              --header 'Accept: application/json' \
+              --header 'X-Access-Key: ${{ inputs.access_key }}' \
+              --header 'Content-Type: application/json' \
+              --data '{
+                  "status": "stopped"
+              }')
+            
+            if echo "$RESPONSE" | jq -e 'has("error")' > /dev/null; then
+              ERROR_MSG=$(echo "$RESPONSE" | jq -r '.error.message')
+              echo "::warning::Failed to stop Virtual TestNet: $ERROR_MSG"
+            else
+              echo "Virtual TestNet stopped successfully"
+            fi
+          else
+            echo "::warning::No TestNet ID found, skipping cleanup"
+          fi
 
 
 branding:
