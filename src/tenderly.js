@@ -102,7 +102,6 @@ async function setupTenderlyConfig(accessKey) {
 
     await fs.mkdir(configDir, { recursive: true });
     await fs.writeFile(configFile, `access_key: ${accessKey}`);
-    await fs.chmod(configFile, CONFIG_FILE_MODE);
     
     core.debug('Tenderly config file created successfully');
   } catch (error) {
