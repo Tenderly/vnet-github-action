@@ -32,8 +32,8 @@ inputs:
 
 runs:
   using: 'node20'
-  main: 'src/index.js'
-  post: 'src/cleanup.js'
+  main: 'dist/index.js'
+  post: 'dist/cleanup.js'
   post-if: always()
 
 branding:
