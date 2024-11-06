@@ -1,37 +1,12 @@
-name: Deploy to Tenderly VNet
+name: Test Tenderly VNet Action
 
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+on: [push, workflow_dispatch]
 
 jobs:
-  deploy:
+  test:
     runs-on: ubuntu-latest
-    env:
-      TENDERLY_ACCESS_KEY: ${{ secrets.TENDERLY_ACCESS_KEY }}
-      TENDERLY_PROJECT_SLUG: ${{ secrets.TENDERLY_PROJECT_SLUG }}
-      TENDERLY_ACCOUNT_SLUG: ${{ secrets.TENDERLY_ACCOUNT_SLUG }}
     steps:
       - uses: actions/checkout@v4
-
-      - name: Create Tenderly config
-        run: |
-          mkdir -p $HOME/.tenderly
-          echo "access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}" > $HOME/.tenderly/config.yaml
-          chmod 600 $HOME/.tenderly/config.yaml
-          ls -la $HOME/.tenderly
-          cat $HOME/.tenderly/config.yaml
-
-      - name: Set up Tenderly TestNet
-        uses: Tenderly/vnet-github-action@v1.1
-        with:
-          access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
-          project_name: ${{ secrets.TENDERLY_PROJECT_SLUG }}
-          testnet_slug: 'ci_testnet'
-          testnet_name: 'CI TestNet'
-          network_id: '1'
-          block_number: 'latest'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -41,37 +16,19 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Verify Tenderly configuration
-        run: |
-          ls -la /home/runner/.tenderly
-          cat /home/runner/.tenderly/config.yaml
-          echo "TENDERLY_ACCESS_KEY: ${{ env.TENDERLY_ACCESS_KEY }}"
-          echo "TENDERLY_ADMIN_RPC_URL: ${{ env.TENDERLY_ADMIN_RPC_URL }}"
-
-      - name: Deploy contract to VNet
-        run: npm run deploy:vnet
-        env:
-          TENDERLY_PUBLIC_RPC_URL: ${{ env.TENDERLY_ADMIN_RPC_URL }}
-          TENDERLY_ACCESS_KEY: ${{ env.TENDERLY_ACCESS_KEY }}
-
-      - name: Store deployment artifacts
-        uses: actions/upload-artifact@v4
+      - name: Tenderly Virtual TestNet Setup
+        uses: Tenderly/vnet-github-action@v1.0.3
         with:
-          name: deployment-artifacts
-          path: |
-            deployment.json
-            artifacts/**/*.json
-            
-      - name: Verify deployment
-        run: |
-          if [ ! -f deployment.json ]; then
-            echo "Deployment file not found!"
-            exit 1
-          fi
-          ADDRESS=$(jq -r '.counterAddress' deployment.json)
-          if [ -z "$ADDRESS" ]; then
-            echo "Contract address not found in deployment file!"
-            exit 1
-          fi
-          echo "Contract deployed at $ADDRESS"
-          # Here you could add more verification steps, like calling a method on the contract
+          access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
+          project_name: ${{ vars.TENDERLY_PROJECT_SLUG }}
+          account_name: ${{ vars.TENDERLY_ACCOUNT_SLUG }}
+          testnet_name: 'Test Network'
+          network_id: '1'
+          block_number: 'latest'
+
+      - name: Run tests
+        env:
+          TENDERLY_PROJECT_SLUG: ${{ vars.TENDERLY_PROJECT_SLUG }}
+          TENDERLY_ACCOUNT_SLUG: ${{ vars.TENDERLY_ACCOUNT_SLUG }}
+          TENDERLY_ACCESS_KEY: ${{ secrets.TENDERLY_ACCESS_KEY }}
+        run: npm run deploy:vnet
