@@ -29172,6 +29172,7 @@ async function createVirtualTestNet(inputs) {
     const timestamp = Math.floor(Date.now() / 1000);
     const slug = `${inputs.testnetSlug}-${timestamp}`;
 
+    core.debug(`Making API request to create TestNet with slug: ${slug}`);
     const response = await axios({
       method: 'post',
       url: `${API_BASE_URL}/account/${inputs.accountName}/project/${inputs.projectName}/vnets`,
@@ -29185,63 +29186,43 @@ async function createVirtualTestNet(inputs) {
         display_name: inputs.testnetName,
         fork_config: {
           network_id: parseInt(inputs.networkId),
+          chain_id: inputs.chainId ? parseInt(inputs.chainId) : undefined,
           block_number: inputs.blockNumber
-        },
-        virtual_network_config: {
-          chain_config: {
-            chain_id: parseInt(inputs.chainId || inputs.networkId)
-          }
-        },
-        sync_state_config: {
-          enabled: false
-        },
-        explorer_page_config: {
-          enabled: true,
-          verification_visibility: "bytecode"
         }
       }
     });
 
     const { data } = response;
+    core.debug('API Response:', JSON.stringify(data, null, 2));
     
-    if (!data.rpcs || data.rpcs.length === 0) {
-      throw new Error('No RPC endpoints returned from Tenderly API');
+    if (!data) {
+      throw new Error('No data returned from Tenderly API');
+    }
+
+    if (!data.rpcs) {
+      throw new Error('No RPC data in response: ' + JSON.stringify(data));
+    }
+
+    const adminRpc = data.rpcs.find(rpc => rpc.name === RPC_TYPES.ADMIN);
+    const publicRpc = data.rpcs.find(rpc => rpc.name === RPC_TYPES.PUBLIC);
+
+    if (!adminRpc || !publicRpc) {
+      throw new Error('Missing required RPC endpoints in response: ' + JSON.stringify(data.rpcs));
     }
 
     return {
       id: data.id,
-      adminRpcUrl: data.rpcs.find(rpc => rpc.name === RPC_TYPES.ADMIN)?.url,
-      publicRpcUrl: data.rpcs.find(rpc => rpc.name === RPC_TYPES.PUBLIC)?.url
+      adminRpcUrl: adminRpc.url,
+      publicRpcUrl: publicRpc.url
     };
 
   } catch (error) {
     if (error.response) {
-      const message = error.response.data.error?.message || error.response.data;
+      core.debug('API Error Response:', JSON.stringify(error.response.data, null, 2));
+      const message = error.response.data.error?.message || JSON.stringify(error.response.data);
       throw new Error(`Failed to create TestNet: ${message}`);
     }
-    throw error;
-  }
-}
-
-async function stopVirtualTestNet(inputs) {
-  try {
-    await axios({
-      method: 'patch',
-      url: `${API_BASE_URL}/account/${inputs.accountName}/project/${inputs.projectName}/vnets/${inputs.testnetId}`,
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'X-Access-Key': inputs.accessKey
-      },
-      data: {
-        status: 'stopped'
-      }
-    });
-  } catch (error) {
-    if (error.response) {
-      const message = error.response.data.error?.message || error.response.data;
-      throw new Error(`Failed to stop TestNet: ${message}`);
-    }
+    core.debug('Error:', error);
     throw error;
   }
 }
@@ -35982,12 +35963,22 @@ var __webpack_exports__ = {};
 const core = __nccwpck_require__(7484);
 const { createVirtualTestNet, setupTenderlyConfig } = __nccwpck_require__(8056);
 
+function generateSlug(testnetName) {
+  const timestamp = Math.floor(Date.now() / 1000);
+  const baseSlug = testnetName
+    .toLowerCase()           // convert to lowercase
+    .trim()                 // remove leading/trailing spaces
+    .replace(/\s+/g, '-')   // replace spaces with hyphens
+    .replace(/[^a-z0-9-]/g, ''); // remove special characters
+  
+  return `${baseSlug}-${timestamp}`;
+}
+
 function validateInputs(inputs) {
   const requiredInputs = {
     access_key: { minLength: 20 },
     project_name: { required: true },
     account_name: { required: true },
-    testnet_slug: { required: true },
     testnet_name: { required: true },
     network_id: { required: true, isNumeric: true },
     block_number: { required: true }
@@ -36016,12 +36007,15 @@ async function run() {
       accessKey: core.getInput('access_key', { required: true }),
       projectName: core.getInput('project_name', { required: true }),
       accountName: core.getInput('account_name', { required: true }),
-      testnetSlug: core.getInput('testnet_slug'),
-      testnetName: core.getInput('testnet_name'),
+      testnetName: core.getInput('testnet_name', { required: true }),
       networkId: core.getInput('network_id'),
       chainId: core.getInput('chain_id'),
       blockNumber: core.getInput('block_number')
     };
+
+    // Generate slug from testnet name
+    inputs.testnetSlug = generateSlug(inputs.testnetName);
+    core.debug(`Generated testnet slug: ${inputs.testnetSlug}`);
 
     validateInputs(inputs);
 
@@ -36032,11 +36026,13 @@ async function run() {
     core.exportVariable('TENDERLY_PROJECT_NAME', inputs.projectName);
     core.exportVariable('TENDERLY_ADMIN_RPC_URL', testNet.adminRpcUrl);
     core.exportVariable('TENDERLY_PUBLIC_RPC_URL', testNet.publicRpcUrl);
+    core.exportVariable('TENDERLY_TESTNET_SLUG', inputs.testnetSlug);
     
     await setupTenderlyConfig(inputs.accessKey);
 
     core.info('Tenderly Virtual TestNet created successfully');
     core.info(`TestNet ID: ${testNet.id}`);
+    core.info(`TestNet Slug: ${inputs.testnetSlug}`);
   } catch (error) {
     core.setFailed(error.message);
   }

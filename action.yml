@@ -10,10 +10,6 @@ inputs:
   account_name:
     description: 'Tenderly Account Name'
     required: true
-  testnet_slug:
-    description: 'Slug for the Virtual TestNet (must be unique within project)'
-    required: true
-    default: 'ci_testnet'
   testnet_name:
     description: 'Display name for the Virtual TestNet'
     required: true

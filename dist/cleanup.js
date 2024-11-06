@@ -29172,6 +29172,7 @@ async function createVirtualTestNet(inputs) {
     const timestamp = Math.floor(Date.now() / 1000);
     const slug = `${inputs.testnetSlug}-${timestamp}`;
 
+    core.debug(`Making API request to create TestNet with slug: ${slug}`);
     const response = await axios({
       method: 'post',
       url: `${API_BASE_URL}/account/${inputs.accountName}/project/${inputs.projectName}/vnets`,
@@ -29185,63 +29186,43 @@ async function createVirtualTestNet(inputs) {
         display_name: inputs.testnetName,
         fork_config: {
           network_id: parseInt(inputs.networkId),
+          chain_id: inputs.chainId ? parseInt(inputs.chainId) : undefined,
           block_number: inputs.blockNumber
-        },
-        virtual_network_config: {
-          chain_config: {
-            chain_id: parseInt(inputs.chainId || inputs.networkId)
-          }
-        },
-        sync_state_config: {
-          enabled: false
-        },
-        explorer_page_config: {
-          enabled: true,
-          verification_visibility: "bytecode"
         }
       }
     });
 
     const { data } = response;
+    core.debug('API Response:', JSON.stringify(data, null, 2));
     
-    if (!data.rpcs || data.rpcs.length === 0) {
-      throw new Error('No RPC endpoints returned from Tenderly API');
+    if (!data) {
+      throw new Error('No data returned from Tenderly API');
+    }
+
+    if (!data.rpcs) {
+      throw new Error('No RPC data in response: ' + JSON.stringify(data));
+    }
+
+    const adminRpc = data.rpcs.find(rpc => rpc.name === RPC_TYPES.ADMIN);
+    const publicRpc = data.rpcs.find(rpc => rpc.name === RPC_TYPES.PUBLIC);
+
+    if (!adminRpc || !publicRpc) {
+      throw new Error('Missing required RPC endpoints in response: ' + JSON.stringify(data.rpcs));
     }
 
     return {
       id: data.id,
-      adminRpcUrl: data.rpcs.find(rpc => rpc.name === RPC_TYPES.ADMIN)?.url,
-      publicRpcUrl: data.rpcs.find(rpc => rpc.name === RPC_TYPES.PUBLIC)?.url
+      adminRpcUrl: adminRpc.url,
+      publicRpcUrl: publicRpc.url
     };
 
   } catch (error) {
     if (error.response) {
-      const message = error.response.data.error?.message || error.response.data;
+      core.debug('API Error Response:', JSON.stringify(error.response.data, null, 2));
+      const message = error.response.data.error?.message || JSON.stringify(error.response.data);
       throw new Error(`Failed to create TestNet: ${message}`);
     }
-    throw error;
-  }
-}
-
-async function stopVirtualTestNet(inputs) {
-  try {
-    await axios({
-      method: 'patch',
-      url: `${API_BASE_URL}/account/${inputs.accountName}/project/${inputs.projectName}/vnets/${inputs.testnetId}`,
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'X-Access-Key': inputs.accessKey
-      },
-      data: {
-        status: 'stopped'
-      }
-    });
-  } catch (error) {
-    if (error.response) {
-      const message = error.response.data.error?.message || error.response.data;
-      throw new Error(`Failed to stop TestNet: ${message}`);
-    }
+    core.debug('Error:', error);
     throw error;
   }
 }
@@ -35980,7 +35961,7 @@ module.exports = /*#__PURE__*/JSON.parse('{"application/1d-interleaved-parityfec
 /************************************************************************/
 var __webpack_exports__ = {};
 const core = __nccwpck_require__(7484);
-const { stopVirtualTestNet } = __nccwpck_require__(8056);
+const { stopVirtualTestNet: cleanup_stopVirtualTestNet } = __nccwpck_require__(8056);
 
 async function cleanup() {
   try {
@@ -35997,7 +35978,7 @@ async function cleanup() {
       testnetId
     };
 
-    await stopVirtualTestNet(inputs);
+    await cleanup_stopVirtualTestNet(inputs);
     core.info('Virtual TestNet stopped successfully');
   } catch (error) {
     core.warning(`Failed to stop Virtual TestNet: ${error.message}`);
