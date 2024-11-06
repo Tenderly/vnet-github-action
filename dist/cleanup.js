@@ -29155,24 +29155,29 @@ module.exports = {
 
 const core = __nccwpck_require__(7484);
 const axios = __nccwpck_require__(7269);
-const path = __nccwpck_require__(6928);
-const os = __nccwpck_require__(857);
-const fs = (__nccwpck_require__(9896).promises);
 
 const API_BASE_URL = 'https://api.tenderly.co/api/v1';
-const CONFIG_FILE_MODE = 0o600;
-const RPC_TYPES = {
-  ADMIN: 'Admin RPC',
-  PUBLIC: 'Public RPC'
-};
 
 async function createVirtualTestNet(inputs) {
   try {
-    core.debug('Creating Virtual TestNet...');
-    const timestamp = Math.floor(Date.now() / 1000);
-    const slug = `${inputs.testnetSlug}-${timestamp}`;
+    core.debug('Creating Virtual TestNet with inputs: ' + JSON.stringify(inputs));
 
+    const slug = generateSlug(inputs.testnetName);
+    
     core.debug(`Making API request to create TestNet with slug: ${slug}`);
+    
+    const requestData = {
+      slug,
+      display_name: inputs.testnetName,
+      fork_config: {
+        network_id: parseInt(inputs.networkId),
+        chain_id: inputs.chainId ? parseInt(inputs.chainId) : undefined,
+        block_number: inputs.blockNumber
+      }
+    };
+
+    core.debug('Request data: ' + JSON.stringify(requestData));
+
     const response = await axios({
       method: 'post',
       url: `${API_BASE_URL}/account/${inputs.accountName}/project/${inputs.projectName}/vnets`,
@@ -29181,33 +29186,25 @@ async function createVirtualTestNet(inputs) {
         'Content-Type': 'application/json',
         'X-Access-Key': inputs.accessKey
       },
-      data: {
-        slug,
-        display_name: inputs.testnetName,
-        fork_config: {
-          network_id: parseInt(inputs.networkId),
-          chain_id: inputs.chainId ? parseInt(inputs.chainId) : undefined,
-          block_number: inputs.blockNumber
-        }
-      }
+      data: requestData
     });
 
     const { data } = response;
-    core.debug('API Response:', JSON.stringify(data, null, 2));
-    
+    core.debug('API Response: ' + JSON.stringify(data));
+
     if (!data) {
       throw new Error('No data returned from Tenderly API');
     }
 
-    if (!data.rpcs) {
-      throw new Error('No RPC data in response: ' + JSON.stringify(data));
+    if (!Array.isArray(data.rpcs)) {
+      throw new Error(`Invalid RPC data in response: ${JSON.stringify(data)}`);
     }
 
-    const adminRpc = data.rpcs.find(rpc => rpc.name === RPC_TYPES.ADMIN);
-    const publicRpc = data.rpcs.find(rpc => rpc.name === RPC_TYPES.PUBLIC);
+    const adminRpc = data.rpcs.find(rpc => rpc.name === 'Admin RPC');
+    const publicRpc = data.rpcs.find(rpc => rpc.name === 'Public RPC');
 
     if (!adminRpc || !publicRpc) {
-      throw new Error('Missing required RPC endpoints in response: ' + JSON.stringify(data.rpcs));
+      throw new Error(`Missing RPC endpoints in response: ${JSON.stringify(data.rpcs)}`);
     }
 
     return {
@@ -29218,14 +29215,26 @@ async function createVirtualTestNet(inputs) {
 
   } catch (error) {
     if (error.response) {
-      core.debug('API Error Response:', JSON.stringify(error.response.data, null, 2));
+      core.debug('API Error Response: ' + JSON.stringify(error.response.data));
       const message = error.response.data.error?.message || JSON.stringify(error.response.data);
       throw new Error(`Failed to create TestNet: ${message}`);
     }
-    core.debug('Error:', error);
+    core.debug('Error: ' + error.message);
     throw error;
   }
 }
+
+function generateSlug(testnetName) {
+  const timestamp = Math.floor(Date.now() / 1000);
+  const baseSlug = testnetName
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '');
+  
+  return `${baseSlug}-${timestamp}`;
+}
+
 
 async function setupTenderlyConfig(accessKey) {
   try {
