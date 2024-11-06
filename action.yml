@@ -38,7 +38,6 @@ runs:
       run: |
         echo "TENDERLY_ACCOUNT_NAME=${{ inputs.account_name }}" >> $GITHUB_ENV
         echo "TENDERLY_PROJECT_NAME=${{ inputs.project_name }}" >> $GITHUB_ENV
-        echo "TENDERLY_ACCESS_KEY=${{ inputs.access_key }}" >> $GITHUB_ENV
     - name: Check prerequisites
       shell: bash
       run: |
@@ -188,20 +187,22 @@ runs:
         echo "TestNet ID: ${{ env.TENDERLY_TESTNET_ID }}"
         echo "Admin RPC URL: ${{ env.TENDERLY_ADMIN_RPC_URL }}"
         echo "Public RPC URL: ${{ env.TENDERLY_PUBLIC_RPC_URL }}"
-
-
-
-post:
-  using: 'composite'
-  steps:
-    - name: Stop Tenderly Virtual TestNet
-      if: always()
+    
+    - name: Setup pause for Tenderly Virtual TestNet
+      if: success()
       shell: bash
-      run: |        
+      run: |
+        echo "CLEANUP_REQUIRED=true" >> $GITHUB_ENV
+        echo "Cleanup registered for TestNet ID: ${{ env.TENDERLY_TESTNET_ID }}"
+
+    - name: Pause Tenderly Virtual TestNet
+      if: env.CLEANUP_REQUIRED == 'true'
+      shell: bash
+      run: |
         RESPONSE=$(curl --silent --show-error --fail-with-body \
-          --location --request PATCH "https://api.tenderly.co/api/v1/account/$TENDERLY_ACCOUNT_NAME/project/$TENDERLY_PROJECT_NAME/vnets/$TENDERLY_TESTNET_ID" \
+          --location --request PATCH "https://api.tenderly.co/api/v1/account/${{ env.TENDERLY_ACCOUNT_NAME }}/project/${{ env.TENDERLY_PROJECT_NAME }}/vnets/${{ env.TENDERLY_TESTNET_ID }}" \
           --header 'Accept: application/json' \
-          --header 'X-Access-Key: $TENDERLY_ACCESS_KEY' \
+          --header 'X-Access-Key: ${{ inputs.access_key }}' \
           --header 'Content-Type: application/json' \
           --data '{
               "status": "stopped"
@@ -213,6 +214,7 @@ post:
         else
           echo "Virtual TestNet stopped successfully"
         fi
+
 
 branding:
   icon: 'cloud'
