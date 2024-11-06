@@ -33,6 +33,12 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: Set up environment variables
+      shell: bash
+      run: |
+        echo "TENDERLY_ACCOUNT_NAME=${{ inputs.account_name }}" >> $GITHUB_ENV
+        echo "TENDERLY_PROJECT_NAME=${{ inputs.project_name }}" >> $GITHUB_ENV
+        echo "TENDERLY_ACCESS_KEY=${{ inputs.access_key }}" >> $GITHUB_ENV
     - name: Check prerequisites
       shell: bash
       run: |
@@ -73,10 +79,10 @@ runs:
 
         # Make API call with error handling
         RESPONSE=$(curl --silent --show-error --fail-with-body \
-          --url "https://api.tenderly.co/api/v1/account/${{ inputs.account_name }}/project/${{ inputs.project_name }}/vnets" \
+          --url "https://api.tenderly.co/api/v1/account/${{ env.TENDERLY_ACCOUNT_NAME }}/project/${{ env.TENDERLY_PROJECT_NAME }}/vnets" \
           --header 'Accept: application/json' \
           --header 'Content-Type: application/json' \
-          --header 'X-Access-Key: ${{ inputs.access_key }}' \
+          --header 'X-Access-Key: ${{ env.TENDERLY_ACCESS_KEY }}' \
           --data '{
             "slug": "'"${SLUG}"'",
             "display_name": "${{ inputs.testnet_name }}",
@@ -86,7 +92,7 @@ runs:
             },
             "virtual_network_config": {
               "chain_config": {
-                "chain_id": '"${CHAIN_ID}"'
+                "chain_id": '"${{ env.TENDERLY_CHAIN_ID }}"'
               }
             },
             "sync_state_config": {
@@ -182,6 +188,9 @@ runs:
         echo "TestNet ID: ${{ env.TENDERLY_TESTNET_ID }}"
         echo "Admin RPC URL: ${{ env.TENDERLY_ADMIN_RPC_URL }}"
         echo "Public RPC URL: ${{ env.TENDERLY_PUBLIC_RPC_URL }}"
+
+
+
 post:
   using: 'composite'
   steps:
@@ -190,9 +199,9 @@ post:
       shell: bash
       run: |        
         RESPONSE=$(curl --silent --show-error --fail-with-body \
-          --location --request PATCH "https://api.tenderly.co/api/v1/account/${{ inputs.account_name }}/project/${{ inputs.project_name }}/vnets/${{ env.TENDERLY_TESTNET_ID }}" \
+          --location --request PATCH "https://api.tenderly.co/api/v1/account/${{ env.TENDERLY_ACCOUNT_NAME }}/project/${{ env.TENDERLY_PROJECT_NAME }}/vnets/${{ env.TENDERLY_TESTNET_ID }}" \
           --header 'Accept: application/json' \
-          --header 'X-Access-Key: ${{ inputs.access_key }}' \
+          --header 'X-Access-Key: ${{ env.TENDERLY_ACCESS_KEY }}' \
           --header 'Content-Type: application/json' \
           --data '{
               "status": "stopped"
