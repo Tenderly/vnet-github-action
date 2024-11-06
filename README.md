@@ -2,7 +2,7 @@
 
 ## Overview
 
-This repository contains a GitHub Action that sets up a Tenderly Virtual TestNet for blockchain development and testing. It's designed to automate the process of creating a virtual testnet environment, making it easier to test smart contracts and blockchain applications in a controlled setting.
+This GitHub Action sets up a Tenderly Virtual TestNet for blockchain development and testing. It's designed to automate the process of creating a virtual testnet environment, making it easier to test smart contracts and blockchain applications in a controlled setting.
 
 ## Purpose
 
@@ -18,10 +18,8 @@ The primary purposes of this GitHub Action are:
 1. Click the "Use this template" button on GitHub to create a new repository from this template.
 2. Clone your new repository to your local machine.
 3. Update the `hardhat.config.js` file with your Tenderly project information.
-4. Set up the following secrets in your GitHub repository:
+4. Set up the following secret in your GitHub repository:
    - TENDERLY_ACCESS_KEY
-   - TENDERLY_PROJECT_SLUG
-   - TENDERLY_ACCOUNT_SLUG
 5. Customize the contracts in the `contracts/` directory as needed for your project.
 6. Update the deployment script in `scripts/deploy.js` if necessary.
 7. Modify the test files in the `test/` directory to suit your contracts.
@@ -43,9 +41,9 @@ The action accepts the following inputs:
 - `access_key`: Tenderly API Access Key (required)
 - `project_name`: Tenderly Project Name (required)
 - `account_name`: Tenderly Account Name (required)
-- `testnet_slug`: Slug for the Virtual TestNet (default: 'ci_testnet')
 - `testnet_name`: Display name for the Virtual TestNet (default: 'CI TestNet')
 - `network_id`: Network ID to fork (default: '1')
+- `chain_id`: Chain ID for Virtual TestNet (default: `network_id`)
 - `block_number`: Block number to fork from in hex (default: 'latest')
 
 
@@ -54,6 +52,7 @@ The action accepts the following inputs:
 The action sets the following environment variables:
 
 - `TENDERLY_TESTNET_ID`: The ID of the created TestNet
+- `TENDERLY_CHAIN_ID`: The Chain ID used for Contract Deployment on TestNet
 - `TENDERLY_ADMIN_RPC_URL`: The Admin RPC URL for the TestNet
 - `TENDERLY_PUBLIC_RPC_URL`: The Public RPC URL for the TestNet
 - `TENDERLY_FOUNDRY_VERIFICATION_URL`: The URL for Foundry contract verification

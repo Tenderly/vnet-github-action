@@ -22,6 +22,9 @@ inputs:
     description: 'Network ID to fork (e.g., 1 for Ethereum mainnet, 137 for Polygon)'
     required: true
     default: '1'
+  chain_id:
+    description: 'Chain ID for Virtual TestNet'
+    required: false
   block_number:
     description: 'Block number to fork from (in hex or "latest")'
     required: true
@@ -55,14 +58,27 @@ runs:
     - name: Create Tenderly Virtual TestNet
       shell: bash
       run: |
+        # Compute chain_id if not provided
+        CHAIN_ID="${{ inputs.chain_id }}"
+        if [ -z "$CHAIN_ID" ]; then
+          CHAIN_ID="${{ inputs.network_id }}"
+        fi
+
+        # Add chain_id to environment variables
+        echo "TENDERLY_CHAIN_ID=${CHAIN_ID}" >> $GITHUB_ENV
+
+        # Generate slug from testnet_name
+        TIMESTAMP=$(date +%s)
+        SLUG=$(echo "${{ inputs.testnet_name }}" | tr '[:upper:]
+
         # Make API call with error handling
         RESPONSE=$(curl --silent --show-error --fail-with-body \
-          --url "https://api.tenderly.co/api/v1/account/me/project/${{ inputs.project_name }}/vnets" \
+          --url "https://api.tenderly.co/api/v1/account/${{ inputs.account_name }}/project/${{ inputs.project_name }}/vnets" \
           --header 'Accept: application/json' \
           --header 'Content-Type: application/json' \
           --header 'X-Access-Key: ${{ inputs.access_key }}' \
           --data '{
-            "slug": "${{ inputs.testnet_slug }}",
+            "slug": "'"${SLUG}"'",
             "display_name": "${{ inputs.testnet_name }}",
             "fork_config": {
               "network_id": ${{ inputs.network_id }},
@@ -70,7 +86,7 @@ runs:
             },
             "virtual_network_config": {
               "chain_config": {
-                "chain_id": ${{ inputs.network_id }}
+                "chain_id": '"${CHAIN_ID}"'
               }
             },
             "sync_state_config": {
@@ -166,8 +182,11 @@ runs:
         echo "TestNet ID: ${{ env.TENDERLY_TESTNET_ID }}"
         echo "Admin RPC URL: ${{ env.TENDERLY_ADMIN_RPC_URL }}"
         echo "Public RPC URL: ${{ env.TENDERLY_PUBLIC_RPC_URL }}"
-    
+post:
+  using: 'composite'
+  steps:
     - name: Stop Tenderly Virtual TestNet
+      if: always()
       shell: bash
       run: |        
         RESPONSE=$(curl --silent --show-error --fail-with-body \
