@@ -29171,8 +29171,19 @@ async function createVirtualTestNet(inputs) {
       display_name: inputs.testnetName,
       fork_config: {
         network_id: parseInt(inputs.networkId),
-        chain_id: inputs.chainId ? parseInt(inputs.chainId) : undefined,
         block_number: inputs.blockNumber
+      },
+      virtual_network_config: {
+        chain_config: {
+          chain_id: parseInt(inputs.chainId)
+        }
+      },
+      sync_state_config: {
+        enabled: false
+      },
+      explorer_page_config: {
+        enabled: true,
+        verification_visibility: "bytecode"
       }
     };
 
