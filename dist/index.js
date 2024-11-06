@@ -36020,7 +36020,7 @@ function generateSlug(testnetName) {
 
 function validateInputs(inputs) {
   const requiredInputs = {
-    access_key: { minLength: 20 },
+    access_key: { required: true },
     project_name: { required: true },
     account_name: { required: true },
     testnet_name: { required: true },
@@ -36030,12 +36030,13 @@ function validateInputs(inputs) {
 
   Object.entries(requiredInputs).forEach(([key, rules]) => {
     const value = inputs[key];
-    if (rules.required && !value) {
+    
+    // First check if value exists when required
+    if (rules.required && (!value || value.trim() === '')) {
       throw new Error(`Input '${key}' is required`);
     }
-    if (rules.minLength && value.length < rules.minLength) {
-      throw new Error(`Input '${key}' must be at least ${rules.minLength} characters`);
-    }
+
+    // Only check numeric if value exists and isNumeric is specified
     if (rules.isNumeric && value && isNaN(parseInt(value))) {
       throw new Error(`Input '${key}' must be a valid number`);
     }
@@ -36048,13 +36049,13 @@ function validateInputs(inputs) {
 async function run() {
   try {
     const inputs = {
-      accessKey: core.getInput('access_key', { required: true }),
-      projectName: core.getInput('project_name', { required: true }),
-      accountName: core.getInput('account_name', { required: true }),
-      testnetName: core.getInput('testnet_name', { required: true }),
-      networkId: core.getInput('network_id'),
-      chainId: core.getInput('chain_id'),
-      blockNumber: core.getInput('block_number')
+      accessKey: core.getInput('access_key', { required: true, trimWhitespace: true }),
+      projectName: core.getInput('project_name', { required: true, trimWhitespace: true }),
+      accountName: core.getInput('account_name', { required: true, trimWhitespace: true }),
+      testnetName: core.getInput('testnet_name', { required: true, trimWhitespace: true }),
+      networkId: core.getInput('network_id', { required: true, trimWhitespace: true }),
+      chainId: core.getInput('chain_id', { trimWhitespace: true }) || core.getInput('network_id', { trimWhitespace: true }),
+      blockNumber: core.getInput('block_number', { required: true, trimWhitespace: true })
     };
 
     // Generate slug from testnet name
