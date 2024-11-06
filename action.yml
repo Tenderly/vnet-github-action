@@ -74,7 +74,7 @@ runs:
 
         # Generate slug from testnet_name
         TIMESTAMP=$(date +%s)
-        SLUG=$(echo "${{ inputs.testnet_name }}" | tr '[:upper:]
+        SLUG=$(echo "${{ inputs.testnet_name }}" | tr '[:upper:]' '[:lower:]' | sed 's/ /-/g')-${TIMESTAMP}
 
         # Make API call with error handling
         RESPONSE=$(curl --silent --show-error --fail-with-body \
