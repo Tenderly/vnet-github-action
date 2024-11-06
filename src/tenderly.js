@@ -87,6 +87,41 @@ async function setupTenderlyConfig(accessKey) {
   }
 }
 
+async function stopVirtualTestNet(inputs) {
+  try {
+    core.debug('Stopping Virtual TestNet...');
+    
+    if (!inputs.testnetId) {
+      throw new Error('TestNet ID is required for cleanup');
+    }
+
+    const response = await axios({
+      method: 'patch',
+      url: `${API_BASE_URL}/account/${inputs.accountName}/project/${inputs.projectName}/vnets/${inputs.testnetId}`,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'X-Access-Key': inputs.accessKey
+      },
+      data: {
+        status: 'stopped'
+      }
+    });
+
+    core.debug('TestNet stopped successfully');
+    return response.data;
+
+  } catch (error) {
+    if (error.response) {
+      core.debug('API Error Response:', JSON.stringify(error.response.data, null, 2));
+      const message = error.response.data.error?.message || JSON.stringify(error.response.data);
+      throw new Error(`Failed to stop TestNet: ${message}`);
+    }
+    core.debug('Error:', error);
+    throw error;
+  }
+}
+
 module.exports = {
   createVirtualTestNet,
   stopVirtualTestNet,

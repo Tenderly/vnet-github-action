@@ -29242,6 +29242,41 @@ async function setupTenderlyConfig(accessKey) {
   }
 }
 
+async function stopVirtualTestNet(inputs) {
+  try {
+    core.debug('Stopping Virtual TestNet...');
+    
+    if (!inputs.testnetId) {
+      throw new Error('TestNet ID is required for cleanup');
+    }
+
+    const response = await axios({
+      method: 'patch',
+      url: `${API_BASE_URL}/account/${inputs.accountName}/project/${inputs.projectName}/vnets/${inputs.testnetId}`,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'X-Access-Key': inputs.accessKey
+      },
+      data: {
+        status: 'stopped'
+      }
+    });
+
+    core.debug('TestNet stopped successfully');
+    return response.data;
+
+  } catch (error) {
+    if (error.response) {
+      core.debug('API Error Response:', JSON.stringify(error.response.data, null, 2));
+      const message = error.response.data.error?.message || JSON.stringify(error.response.data);
+      throw new Error(`Failed to stop TestNet: ${message}`);
+    }
+    core.debug('Error:', error);
+    throw error;
+  }
+}
+
 module.exports = {
   createVirtualTestNet,
   stopVirtualTestNet,
@@ -35961,7 +35996,7 @@ module.exports = /*#__PURE__*/JSON.parse('{"application/1d-interleaved-parityfec
 /************************************************************************/
 var __webpack_exports__ = {};
 const core = __nccwpck_require__(7484);
-const { stopVirtualTestNet: cleanup_stopVirtualTestNet } = __nccwpck_require__(8056);
+const { stopVirtualTestNet } = __nccwpck_require__(8056);
 
 async function cleanup() {
   try {
@@ -35978,7 +36013,7 @@ async function cleanup() {
       testnetId
     };
 
-    await cleanup_stopVirtualTestNet(inputs);
+    await stopVirtualTestNet(inputs);
     core.info('Virtual TestNet stopped successfully');
   } catch (error) {
     core.warning(`Failed to stop Virtual TestNet: ${error.message}`);
