@@ -75,21 +75,3 @@ jobs:
           fi
           echo "Contract deployed at $ADDRESS"
           # Here you could add more verification steps, like calling a method on the contract
-
-      - name: Stop Tenderly Virtual TestNet
-        run: |          
-          RESPONSE=$(curl --silent --show-error --fail-with-body \
-            --location --request PATCH "https://api.tenderly.co/api/v1/account/${{ secrets.TENDERLY_ACCOUNT_SLUG }}/project/${{ secrets.TENDERLY_PROJECT_SLUG }}/vnets/${{ env.TENDERLY_TESTNET_ID }}" \
-            --header 'Accept: application/json' \
-            --header 'X-Access-Key: ${{ secrets.TENDERLY_ACCESS_KEY }}' \
-            --header 'Content-Type: application/json' \
-            --data '{
-                "status": "stopped"
-            }')
-          
-          if echo "$RESPONSE" | jq -e 'has("error")' > /dev/null; then
-            ERROR_MSG=$(echo "$RESPONSE" | jq -r '.error.message')
-            echo "::warning::Failed to stop Virtual TestNet: $ERROR_MSG"
-          else
-            echo "Virtual TestNet stopped successfully"
-          fi
