@@ -1,34 +1,56 @@
-name: Test Tenderly VNet Action
-
-on: [push, workflow_dispatch]
-
+name: Hardhat Pipeline
+on: [push, pull_request]
+env:
+  DEBUG: '@tenderly/github-action'
+  ## Needed available as env variables for hardhat.config.js
+  TENDERLY_PROJECT_NAME: ${{ vars.TENDERLY_PROJECT_NAME }}
+  TENDERLY_ACCOUNT_NAME: ${{ vars.TENDERLY_ACCOUNT_NAME }}
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Tenderly Virtual TestNet Setup
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Setup Virtual TestNet
         uses: Tenderly/vnet-github-action@v1.0.4
         with:
           access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
-          project_name: ${{ vars.TENDERLY_PROJECT_SLUG }}
-          account_name: ${{ vars.TENDERLY_ACCOUNT_SLUG }}
-          testnet_name: 'Test Network'
-          network_id: '1'
-          block_number: 'latest'
+          project_name: ${{ vars.TENDERLY_PROJECT_NAME }}
+          account_name: ${{ vars.TENDERLY_ACCOUNT_NAME }}
+          network_id: 1
+          chain_id: 73571
+          explorer_enabled: true
+          network_name: "Staging TestNet"
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Run Tests
+        run: npx hardhat test --network tenderly_ci
 
-      - name: Deploy Contract
-        env:
-          TENDERLY_PROJECT_SLUG: ${{ vars.TENDERLY_PROJECT_SLUG }}
-          TENDERLY_ACCOUNT_SLUG: ${{ vars.TENDERLY_ACCOUNT_SLUG }}
-          TENDERLY_ACCESS_KEY: ${{ secrets.TENDERLY_ACCESS_KEY }}
-        run: npm run deploy:vnet
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Virtual TestNet
+        uses: Tenderly/vnet-github-action@v1
+        with:
+          access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
+          project_name: ${{ vars.TENDERLY_PROJECT_NAME }}
+          account_name: ${{ vars.TENDERLY_ACCOUNT_NAME }}
+          network_id: 1
+          chain_id: 73571
+          explorer_enabled: true
+          network_name: "Staging TestNet"
+          
+      - name: Deploy Contracts
+        run: npx hardhat run scripts/deploy.js --network tenderly_ci
