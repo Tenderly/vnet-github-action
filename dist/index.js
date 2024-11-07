@@ -29166,9 +29166,9 @@ async function createVirtualTestNet(inputs) {
     core.debug('Creating Virtual TestNet with inputs: ' + JSON.stringify(inputs));
 
     const slug = generateSlug(inputs.testnetName);
-    
+
     core.debug(`Making API request to create TestNet with slug: ${slug}`);
-    
+
     const requestData = {
       slug,
       display_name: inputs.testnetName,
@@ -29182,11 +29182,11 @@ async function createVirtualTestNet(inputs) {
         }
       },
       sync_state_config: {
-        enabled: false
+        enabled: inputs.stateSync
       },
       explorer_page_config: {
-        enabled: true,
-        verification_visibility: "bytecode"
+        enabled: inputs.publicExplorer,
+        verification_visibility: inputs.verificationVisibility
       }
     };
 
@@ -29209,7 +29209,6 @@ async function createVirtualTestNet(inputs) {
     if (!data) {
       throw new Error('No data returned from Tenderly API');
     }
-
     if (!Array.isArray(data.rpcs)) {
       throw new Error(`Invalid RPC data in response: ${JSON.stringify(data)}`);
     }
@@ -36046,20 +36045,28 @@ function validateInputs(inputs) {
     accountName: { required: true },
     testnetName: { required: true },
     networkId: { required: true, isNumeric: true },
-    blockNumber: { required: true }
+    blockNumber: { required: true },
+    publicExplorer: { required: false, isBoolean: true },
+    verificationVisibility: { required: false, isOneOf: ['bytecode', 'abi', 'src'] }
   };
 
   Object.entries(requiredInputs).forEach(([key, rules]) => {
     const value = inputs[key];
-    
-    // First check if value exists when required
+
     if (rules.required && (!value || value.trim() === '')) {
       throw new Error(`Input '${key}' is required`);
     }
 
-    // Only check numeric if value exists and isNumeric is specified
     if (rules.isNumeric && value && isNaN(parseInt(value))) {
       throw new Error(`Input '${key}' must be a valid number`);
+    }
+
+    if (rules.isBoolean && value && typeof value !== 'boolean') {
+      throw new Error(`Input '${key}' must be a boolean`);
+    }
+
+    if (rules.isOneOf && value && !rules.isOneOf.includes(value)) {
+      throw new Error(`Input '${key}' must be one of: ${rules.isOneOf.join(', ')}`);
     }
   });
 
@@ -36076,8 +36083,15 @@ async function run() {
       testnetName: core.getInput('testnet_name', { required: true, trimWhitespace: true }),
       networkId: core.getInput('network_id', { required: true, trimWhitespace: true }),
       chainId: core.getInput('chain_id', { trimWhitespace: true }) || core.getInput('network_id', { trimWhitespace: true }),
-      blockNumber: core.getInput('block_number', { required: true, trimWhitespace: true })
+      blockNumber: core.getInput('block_number', { required: true, trimWhitespace: true }),
+      stateSync: core.getBooleanInput('state_sync', { trimWhitespace: true }),
+      publicExplorer: core.getBooleanInput('public_explorer', { trimWhitespace: true }),
+      verificationVisibility: core.getInput('verification_visibility', { trimWhitespace: true })
     };
+
+    if (!inputs.publicExplorer) {
+      inputs.verificationVisibility = 'bytecode'; // Default to bytecode if public explorer is not enabled
+    }
 
     // Generate slug from testnet name
     inputs.testnetSlug = generateSlug(inputs.testnetName);
@@ -36086,7 +36100,7 @@ async function run() {
     validateInputs(inputs);
 
     const testNet = await createVirtualTestNet(inputs);
-    
+
     core.exportVariable('TENDERLY_TESTNET_ID', testNet.id);
     core.exportVariable('TENDERLY_ACCOUNT_NAME', inputs.accountName);
     core.exportVariable('TENDERLY_PROJECT_NAME', inputs.projectName);
@@ -36094,7 +36108,8 @@ async function run() {
     core.exportVariable('TENDERLY_PUBLIC_RPC_URL', testNet.publicRpcUrl);
     core.exportVariable('TENDERLY_TESTNET_SLUG', inputs.testnetSlug);
     core.exportVariable('TENDERLY_CHAIN_ID', inputs.chainId);
-    
+    core.exportVariable('TENDERLY_FOUNDRY_VERIFICATION_URL', `${testNet.adminRpcUrl}/verify/etherscan`);
+
     await setupTenderlyConfig(inputs.accessKey);
 
     core.info('Tenderly Virtual TestNet created successfully');
@@ -36102,6 +36117,7 @@ async function run() {
     core.info(`TestNet Slug: ${inputs.testnetSlug}`);
     core.info(`Admin RPC URL: ${testNet.adminRpcUrl}`);
     core.info(`Public RPC URL: ${testNet.publicRpcUrl}`);
+    core.info(`Foundry Verification URL: ${testNet.adminRpcUrl}/verify/etherscan`);
   } catch (error) {
     core.setFailed(error.message);
   }

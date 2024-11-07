@@ -11,9 +11,9 @@ async function createVirtualTestNet(inputs) {
     core.debug('Creating Virtual TestNet with inputs: ' + JSON.stringify(inputs));
 
     const slug = generateSlug(inputs.testnetName);
-    
+
     core.debug(`Making API request to create TestNet with slug: ${slug}`);
-    
+
     const requestData = {
       slug,
       display_name: inputs.testnetName,
@@ -27,11 +27,11 @@ async function createVirtualTestNet(inputs) {
         }
       },
       sync_state_config: {
-        enabled: false
+        enabled: inputs.stateSync
       },
       explorer_page_config: {
-        enabled: true,
-        verification_visibility: "bytecode"
+        enabled: inputs.publicExplorer,
+        verification_visibility: inputs.verificationVisibility
       }
     };
 
@@ -54,7 +54,6 @@ async function createVirtualTestNet(inputs) {
     if (!data) {
       throw new Error('No data returned from Tenderly API');
     }
-
     if (!Array.isArray(data.rpcs)) {
       throw new Error(`Invalid RPC data in response: ${JSON.stringify(data)}`);
     }

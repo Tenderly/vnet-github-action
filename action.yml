@@ -25,6 +25,18 @@ inputs:
     description: 'Block number to fork from (in hex or "latest")'
     required: true
     default: 'latest'
+  state_sync:
+    description: 'State Sync enables you to access the latest values of storage slots and account balances'
+    required: false
+    default: false
+  public_explorer:
+    description: 'Public explorer option generates a public URL that you can share with anyone and allow them to view transactional activity on your TestNet'
+    required: false
+    default: false
+  verification_visibility:
+    description: 'If Public Explorer is enabled, level of visibility for smart contracts deployed on your TestNet'
+    required: false
+    default: bytecode
 
 runs:
   using: 'node20'
