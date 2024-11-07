@@ -18,7 +18,7 @@ jobs:
           cache: 'npm'
       
       - name: Setup Virtual TestNet
-        uses: Tenderly/vnet-github-action@v1.0.4a
+        uses: Tenderly/vnet-github-action@v1.0.4b
         with:
           access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
           project_name: ${{ vars.TENDERLY_PROJECT_NAME }}
@@ -34,7 +34,7 @@ jobs:
         run: npm install
       
       - name: Run Tests
-        run: npx hardhat test --network tenderly_ci
+        run: npm run test:vnet
 
   deploy:
     needs: test
@@ -42,9 +42,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
       
       - name: Setup Virtual TestNet
-        uses: Tenderly/vnet-github-action@v1.0.4a
+        uses: Tenderly/vnet-github-action@v1.0.4b
         with:
           access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
           project_name: ${{ vars.TENDERLY_PROJECT_NAME }}
@@ -55,6 +61,9 @@ jobs:
           state_sync: true
           public_explorer: true
           verification_visibility: bytecode
+
+      - name: Install dependencies
+        run: npm install
 
       - name: Deploy Contracts
         run: npm run deploy:vnet
