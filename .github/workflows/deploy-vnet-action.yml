@@ -25,8 +25,7 @@ jobs:
           account_name: ${{ vars.TENDERLY_ACCOUNT_NAME }}
           network_id: 1
           chain_id: 73571
-          explorer_enabled: true
-          network_name: "Staging TestNet"
+          testnet_name: "Staging TestNet"
       
       - name: Install dependencies
         run: npm install
@@ -49,8 +48,7 @@ jobs:
           account_name: ${{ vars.TENDERLY_ACCOUNT_NAME }}
           network_id: 1
           chain_id: 73571
-          explorer_enabled: true
-          network_name: "Staging TestNet"
+          testnet_name: "Staging TestNet"
           
       - name: Deploy Contracts
         run: npx hardhat run scripts/deploy.js --network tenderly_ci
