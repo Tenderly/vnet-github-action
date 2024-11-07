@@ -67,6 +67,7 @@ async function run() {
     core.exportVariable('TENDERLY_PUBLIC_RPC_URL', testNet.publicRpcUrl);
     core.exportVariable('TENDERLY_TESTNET_SLUG', inputs.testnetSlug);
     core.exportVariable('TENDERLY_CHAIN_ID', inputs.chainId);
+    core.exportVariable('TENDERLY_FOUNDRY_VERIFICATION_URL', `${testNet.adminRpcUrl}/verify/etherscan`);
     
     await setupTenderlyConfig(inputs.accessKey);
 
@@ -75,6 +76,7 @@ async function run() {
     core.info(`TestNet Slug: ${inputs.testnetSlug}`);
     core.info(`Admin RPC URL: ${testNet.adminRpcUrl}`);
     core.info(`Public RPC URL: ${testNet.publicRpcUrl}`);
+    core.info(`Foundry Verification URL: ${testNet.adminRpcUrl}/verify/etherscan`);
   } catch (error) {
     core.setFailed(error.message);
   }

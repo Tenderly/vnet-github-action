@@ -17,7 +17,7 @@ jobs:
         run: npm install
 
       - name: Tenderly Virtual TestNet Setup
-        uses: Tenderly/vnet-github-action@v1.0.3
+        uses: Tenderly/vnet-github-action@v1.0.4
         with:
           access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
           project_name: ${{ vars.TENDERLY_PROJECT_SLUG }}
@@ -26,7 +26,7 @@ jobs:
           network_id: '1'
           block_number: 'latest'
 
-      - name: Run tests
+      - name: Deploy Contract
         env:
           TENDERLY_PROJECT_SLUG: ${{ vars.TENDERLY_PROJECT_SLUG }}
           TENDERLY_ACCOUNT_SLUG: ${{ vars.TENDERLY_ACCOUNT_SLUG }}

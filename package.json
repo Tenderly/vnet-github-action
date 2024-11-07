@@ -9,7 +9,7 @@
     "build:cleanup": "ncc build src/cleanup.js -o dist/temp --source-map && mv dist/temp/index.js dist/cleanup.js && rm -rf dist/temp",
     "build:all": "npm run prebuild && npm run build:main && npm run build:cleanup",
     "prepare": "npm run build:all",
-    "deploy:vnet": "hardhat run scripts/deploy.js --network vnet"
+    "deploy:vnet": "yes | npx hardhat ignition deploy ./ignition/modules/Counter.js --network vnet --deployment-id deploy"
   },
   "dependencies": {
     "@actions/core": "^1.10.1",
