@@ -68,7 +68,7 @@ jobs:
           cache: 'npm'
       
       - name: Setup Virtual TestNet
-        uses: Tenderly/vnet-github-action@v1
+        uses: Tenderly/vnet-github-action@v1.0.4
         with:
           access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
           project_name: ${{ vars.TENDERLY_PROJECT_SLUG }}
@@ -81,7 +81,6 @@ jobs:
         run: npm install
       
       - name: Run Tests
-        env:
         run: npx hardhat test --network tenderly_ci
 
   deploy:
@@ -257,4 +256,4 @@ env:
 
 ## License
 
-[MIT License](LICENSE)
+[Tenderly](LICENSE)
