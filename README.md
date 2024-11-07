@@ -82,8 +82,7 @@ jobs:
       
       - name: Run Tests
         env:
-          TENDERLY_FORK_RPC: ${{ env.TENDERLY_PUBLIC_RPC_URL }}
-        run: npx hardhat test
+        run: npx hardhat test --network tenderly_ci
 
   deploy:
     needs: test
@@ -104,7 +103,6 @@ jobs:
           
       - name: Deploy Contracts
         env:
-          TENDERLY_FORK_RPC: ${{ env.TENDERLY_PUBLIC_RPC_URL }}
           PRIVATE_KEY: ${{ secrets.DEPLOY_PRIVATE_KEY }}
         run: npx hardhat run scripts/deploy.js --network tenderly_ci
 ```
@@ -127,7 +125,7 @@ jobs:
 
 ### Foundry Pipeline
 
-This pipeline runs tests against a Tenderly fork and deploys verified contracts to a Virtual TestNet. Virtual TestNets provide a persistent environment, making them ideal for staging and integration testing.
+This pipeline runs tests and deploys verified contracts to a Virtual TestNet. Virtual TestNets provide a persistent environment, making them ideal for staging and integration testing.
 
 ```yaml
 name: Foundry Pipeline
@@ -145,9 +143,6 @@ jobs:
         uses: foundry-rs/foundry-toolchain@v1
       
       - name: Build and Test
-        env:
-          # Use Mainnet fork for testing
-          FOUNDRY_ETH_RPC_URL: https://rpc.tenderly.co/fork/latest-public
         run: |
           forge build
           forge test -vvv
