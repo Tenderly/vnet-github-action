@@ -13,8 +13,7 @@ async function createVirtualTestNet(inputs) {
     const slug = generateSlug(inputs.testnetName);
     
     core.debug(`Making API request to create TestNet with slug: ${slug}`);
-    const chain_id = parseInt(inputs.chainId);
-
+    
     const requestData = {
       slug,
       display_name: inputs.testnetName,
@@ -24,7 +23,7 @@ async function createVirtualTestNet(inputs) {
       },
       virtual_network_config: {
         chain_config: {
-          chain_id
+          chain_id: parseInt(inputs.chainId)
         }
       },
       sync_state_config: {
@@ -70,8 +69,7 @@ async function createVirtualTestNet(inputs) {
     return {
       id: data.id,
       adminRpcUrl: adminRpc.url,
-      publicRpcUrl: publicRpc.url,
-      chain_id
+      publicRpcUrl: publicRpc.url
     };
 
   } catch (error) {
