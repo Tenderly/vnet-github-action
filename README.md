@@ -28,11 +28,11 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Setup Virtual TestNet
-        uses: Tenderly/vnet-github-action@v1
+        uses: Tenderly/vnet-github-action@v1.0.4
         with:
           access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
-          project_name: ${{ vars.TENDERLY_PROJECT_SLUG }}
-          account_name: ${{ vars.TENDERLY_ACCOUNT_SLUG }}
+          project_name: ${{ vars.TENDERLY_PROJECT_NAME }}
+          account_name: ${{ vars.TENDERLY_ACCOUNT_NAME }}
           testnet_name: 'CI Test Network'
           network_id: 1
           chain_id: 73571  # Recommended: prefix with 7357 for unique identification to avoid transaction replay attacks
@@ -71,8 +71,8 @@ jobs:
         uses: Tenderly/vnet-github-action@v1.0.4
         with:
           access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
-          project_name: ${{ vars.TENDERLY_PROJECT_SLUG }}
-          account_name: ${{ vars.TENDERLY_ACCOUNT_SLUG }}
+          project_name: ${{ vars.TENDERLY_PROJECT_NAME }}
+          account_name: ${{ vars.TENDERLY_ACCOUNT_NAME }}
           network_id: 1
           chain_id: 73571
           explorer_enabled: true
@@ -94,15 +94,13 @@ jobs:
         uses: Tenderly/vnet-github-action@v1
         with:
           access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
-          project_name: ${{ vars.TENDERLY_PROJECT_SLUG }}
-          account_name: ${{ vars.TENDERLY_ACCOUNT_SLUG }}
+          project_name: ${{ vars.TENDERLY_PROJECT_NAME }}
+          account_name: ${{ vars.TENDERLY_ACCOUNT_NAME }}
           network_id: 1
           chain_id: 73571
           explorer_enabled: true
           
       - name: Deploy Contracts
-        env:
-          PRIVATE_KEY: ${{ secrets.DEPLOY_PRIVATE_KEY }}
         run: npx hardhat run scripts/deploy.js --network tenderly_ci
 ```
 
@@ -116,8 +114,8 @@ jobs:
 >    }
 >  },
 >  tenderly: {
->    project: process.env.TENDERLY_PROJECT_SLUG,
->    username: process.env.TENDERLY_ACCOUNT_SLUG,
+>    project: process.env.TENDERLY_PROJECT_NAME,
+>    username: process.env.TENDERLY_ACCOUNT_NAME,
 >    accessKey: process.env.TENDERLY_ACCESS_KEY
 >  }
 > ```
@@ -157,8 +155,8 @@ jobs:
         uses: Tenderly/vnet-github-action@v1
         with:
           access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
-          project_name: ${{ vars.TENDERLY_PROJECT_SLUG }}
-          account_name: ${{ vars.TENDERLY_ACCOUNT_SLUG }}
+          project_name: ${{ vars.TENDERLY_PROJECT_NAME }}
+          account_name: ${{ vars.TENDERLY_ACCOUNT_NAME }}
           network_id: 1
           chain_id: 73571
           explorer_enabled: true
@@ -167,7 +165,6 @@ jobs:
         env:
           FOUNDRY_ETH_RPC_URL: ${{ env.TENDERLY_PUBLIC_RPC_URL }}
           FOUNDRY_VERIFIER_URL: ${{ env.TENDERLY_FOUNDRY_VERIFICATION_URL }}
-          PRIVATE_KEY: ${{ secrets.DEPLOY_PRIVATE_KEY }}
         run: |
           forge script script/Deploy.s.sol \
             --rpc-url $FOUNDRY_ETH_RPC_URL \

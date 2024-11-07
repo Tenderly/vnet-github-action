@@ -11,8 +11,8 @@ module.exports = {
     }
   },
   tenderly: {
-    project: process.env.TENDERLY_PROJECT_SLUG,
-    username: process.env.TENDERLY_ACCOUNT_SLUG,
+    project: process.env.TENDERLY_PROJECT_NAME,
+    username: process.env.TENDERLY_ACCOUNT_NAME,
     accessKey: process.env.TENDERLY_ACCESS_KEY
   }
 };
