@@ -5,7 +5,7 @@ require("dotenv").config();
 module.exports = {
   solidity: "0.8.19",
   networks: {
-    vnet: {
+    tenderly_ci: {
       url: process.env.TENDERLY_ADMIN_RPC_URL,
       chainId: parseInt(process.env.TENDERLY_CHAIN_ID)
     }
