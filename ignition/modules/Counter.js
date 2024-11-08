@@ -1,6 +1,6 @@
 const { buildModule } = require("@nomicfoundation/hardhat-ignition/modules");
 
-const MODULE_NAME = "CounterModule";
+const MODULE_NAME = "Counter";
 
 module.exports = buildModule(MODULE_NAME, (m) => {
     console.log("🚀 Starting Counter Module deployment process");
