@@ -28,7 +28,7 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Setup Virtual TestNet
-        uses: Tenderly/vnet-github-action@v1.0.4
+        uses: Tenderly/vnet-github-action@v1.0.6
         with:
           access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
           project_name: ${{ vars.TENDERLY_PROJECT_NAME }}
@@ -68,7 +68,7 @@ jobs:
           cache: 'npm'
       
       - name: Setup Virtual TestNet
-        uses: Tenderly/vnet-github-action@v1.0.4
+        uses: Tenderly/vnet-github-action@v1.0.6
         with:
           access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
           project_name: ${{ vars.TENDERLY_PROJECT_NAME }}
@@ -91,7 +91,7 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Setup Virtual TestNet
-        uses: Tenderly/vnet-github-action@v1
+        uses: Tenderly/vnet-github-action@v1.0.6
         with:
           access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
           project_name: ${{ vars.TENDERLY_PROJECT_NAME }}
@@ -152,7 +152,7 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Setup Virtual TestNet
-        uses: Tenderly/vnet-github-action@v1
+        uses: Tenderly/vnet-github-action@v1.0.6
         with:
           access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
           project_name: ${{ vars.TENDERLY_PROJECT_NAME }}
@@ -215,7 +215,7 @@ jobs:
       matrix:
         network: ['1', '137', '42161']  # Ethereum, Polygon, Arbitrum
     steps:
-      - uses: Tenderly/vnet-github-action@v1
+      - uses: Tenderly/vnet-github-action@v1.0.6
         with:
           network_id: ${{ matrix.network }}
           chain_id: ${{ format('7357{0}', matrix.network) }}
