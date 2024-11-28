@@ -1,4 +1,4 @@
-const { ethers } = require("hardhat");
+import {ethers} from 'hardhat';
 
 describe("Counter", function () {
     it("should increment the count", async function () {
