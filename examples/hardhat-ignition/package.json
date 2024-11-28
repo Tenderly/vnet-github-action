@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "deploy:vnet": "yes | npx hardhat ignition deploy ./ignition/modules/Counter.js --network tenderly_ci --deployment-id deploy",
+    "test:vnet": "npx hardhat test --network tenderly_ci"
   },
   "keywords": [],
   "author": "",
