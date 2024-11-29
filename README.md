@@ -1,7 +1,7 @@
 # Tenderly Virtual TestNet GitHub Action
 
 [![GitHub release](https://img.shields.io/github/release/Tenderly/vnet-github-action.svg?style=flat-square)](https://github.com/Tenderly/vnet-github-action/releases/latest)
-[![GitHub marketplace](https://img.shields.io/badge/marketplace-tenderly--virtual--testnet-blue?logo=github&style=flat-square)](https://github.com/marketplace/actions/tenderly-virtual-testnet)
+[![GitHub marketplace](https://img.shields.io/badge/marketplace-tenderly--virtual--testnet-blue?logo=github&style=flat-square)](https://github.com/marketplace/actions/tenderly-virtual-testnet-setup)
 
 The `Tenderly/vnet-github-action` automates provisioning of [Virtual TestNets](https://docs.tenderly.co/virtual-testnets) for smart contract CI/CD pipelines. Virtual TestNets are testing and staging infrsatructure with built [mainnet State Sync](https://docs.tenderly.co/virtual-testnets/state-sync), [Unlimited Faucet](https://docs.tenderly.co/virtual-testnets/unlimited-faucet), [Debugger](https://docs.tenderly.co/debugger), and [Public Block Explorer](https://docs.tenderly.co/virtual-testnets/testnet-explorer)
 
