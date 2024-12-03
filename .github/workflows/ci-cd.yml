@@ -38,5 +38,5 @@ jobs:
         working-directory: examples/hardhat-ignition
 
       - name: Deploy Contracts
-        run: npm run test:vnet
+        run: npm run deploy:vnet
         working-directory: examples/hardhat-ignition
