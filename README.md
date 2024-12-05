@@ -3,7 +3,7 @@
 [![GitHub release](https://img.shields.io/github/release/Tenderly/vnet-github-action.svg?style=flat-square)](https://github.com/Tenderly/vnet-github-action/releases/latest)
 [![GitHub marketplace](https://img.shields.io/badge/marketplace-tenderly--virtual--testnet-blue?logo=github&style=flat-square)](https://github.com/marketplace/actions/tenderly-virtual-testnet-setup)
 
-The `Tenderly/vnet-github-action` automates provisioning of [Virtual TestNets](https://docs.tenderly.co/virtual-testnets) for smart contract CI/CD pipelines. Virtual TestNets are testing and staging infrsatructure with built [mainnet State Sync](https://docs.tenderly.co/virtual-testnets/state-sync), [Unlimited Faucet](https://docs.tenderly.co/virtual-testnets/unlimited-faucet), [Debugger](https://docs.tenderly.co/debugger), and [Public Block Explorer](https://docs.tenderly.co/virtual-testnets/testnet-explorer)
+The `Tenderly/vnet-github-action` automates provisioning of [Virtual TestNets](https://docs.tenderly.co/virtual-testnets) for smart contract CI/CD pipelines. Virtual TestNets are testing and staging infrastructure with built [Mainnet State Sync](https://docs.tenderly.co/virtual-testnets/state-sync), [Unlimited Faucet](https://docs.tenderly.co/virtual-testnets/unlimited-faucet), [Debugger](https://docs.tenderly.co/debugger), and [Public Block Explorer](https://docs.tenderly.co/virtual-testnets/testnet-explorer)
 
 This action creates a new Virtual TestNet from your configuration and exposes its RPC URLs through environment variables, enabling automated testing and staging environments for your protocols.
 
@@ -26,6 +26,7 @@ After the step `Setup Virtual TestNet` you can access the RPC URL from `TENDERLY
 3. Create the file `.github/workflows/ci.yaml` and use the starter action configuration below.
 4. Commit, push, and check your action execution.
 
+
 ```yaml
 name: Smart Contract CI
 on: [push, pull_request]
@@ -37,7 +38,7 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Setup Virtual TestNet
-        uses: Tenderly/vnet-github-action@v1.0.6
+        uses: Tenderly/vnet-github-action@v1.0.x
         with:
           access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
           project_name: ${{ vars.TENDERLY_PROJECT_NAME }}
@@ -45,9 +46,9 @@ jobs:
           testnet_name: 'CI Test Network'
           network_id: 1
           chain_id: 73571  # Recommended: prefix with 7357 for unique identification to avoid transaction replay attacks
-          explorer_enabled: true 
-          explorer_verification_type: 'src'  # Options: 'abi', 'src', 'bytecode'
-          sync_state_enabled: true 
+          public_explorer: true 
+          verification_visibility: 'src'  # Options: 'abi', 'src', 'bytecode'
+          state_sync: true 
 ```
 
 ## Inputs
@@ -57,13 +58,13 @@ jobs:
 | `access_key`                 | Yes      | -                    | Tenderly API Access Key                                                       |
 | `project_name`               | Yes      | -                    | Tenderly Project Name                                                         |
 | `account_name`               | Yes      | -                    | Tenderly Account Name                                                         |
-| `testnet_name`               | Yes      | 'CI Virtual TestNet' | Display name for the Virtual TestNet                                          |
+| `testnet_name`               | No       | 'CI Virtual TestNet' | Display name for the Virtual TestNet                                          |
 | `network_id`                 | Yes      | 1                    | Network ID to fork (e.g., 1 for Ethereum mainnet) - integer                   |
 | `chain_id`                   | No       | -                    | Custom chain ID for Virtual TestNet (Recommended: prefix with 7357) - integer |
-| `block_number`               | Yes      | 'latest'             | Block number to fork from (must be a hex string, e.g., '0x1234567')           |
-| `explorer_enabled`           | No       | false                | Enable block explorer for the Virtual TestNet                                 |
-| `explorer_verification_type` | No       | 'bytecode'           | Contract verification type ('abi', 'src', or 'bytecode')                      |
-| `sync_state_enabled`         | No       | false                | Enable state synchronization with forked network                              |
+| `block_number`               | No       | 'latest'             | Block number to fork from (must be a hex string, e.g., '0x1234567')           |
+| `public_explorer`            | No       | false                | Enable block explorer for the Virtual TestNet                                 |
+| `verification_visibility`    | No       | 'bytecode'           | Contract verification type ('abi', 'src', or 'bytecode')                      |
+| `state_sync`                 | No       | false                | Enable state synchronization with forked network                              |
 
 ## Outputs
 
@@ -106,14 +107,14 @@ jobs:
           cache: 'npm'
       
       - name: Setup Virtual TestNet
-        uses: Tenderly/vnet-github-action@v1.0.6
+        uses: Tenderly/vnet-github-action@v1.0.x
         with:
           access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
           project_name: ${{ vars.TENDERLY_PROJECT_NAME }}
           account_name: ${{ vars.TENDERLY_ACCOUNT_NAME }}
           network_id: 1
           chain_id: 73571
-          explorer_enabled: true
+          public_explorer: true
       
       - name: Install dependencies
         run: npm install
@@ -129,14 +130,14 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Setup Virtual TestNet
-        uses: Tenderly/vnet-github-action@v1.0.6
+        uses: Tenderly/vnet-github-action@v1.0.x
         with:
           access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
           project_name: ${{ vars.TENDERLY_PROJECT_NAME }}
           account_name: ${{ vars.TENDERLY_ACCOUNT_NAME }}
           network_id: 1
           chain_id: 73571
-          explorer_enabled: true
+          public_explorer: true
           
       - name: Deploy Contracts
         run: npx hardhat run scripts/deploy.js --network tenderly_ci
@@ -192,14 +193,22 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Setup Virtual TestNet
-        uses: Tenderly/vnet-github-action@v1.0.6
+        uses: Tenderly/vnet-github-action@v1.0.x
         with:
           access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
           project_name: ${{ vars.TENDERLY_PROJECT_NAME }}
           account_name: ${{ vars.TENDERLY_ACCOUNT_NAME }}
           network_id: 1
           chain_id: 73571
-          explorer_enabled: true
+          public_explorer: true
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+      
+      - name: Foundry Build
+        run: |
+          forge --version
+          forge build --sizes
           
       - name: Deploy Contracts
         env:
@@ -228,7 +237,7 @@ jobs:
       matrix:
         network: ['1', '137', '42161']  # Ethereum, Polygon, Arbitrum
     steps:
-      - uses: Tenderly/vnet-github-action@v1.0.6
+      - uses: Tenderly/vnet-github-action@v1.0.x
         with:
           network_id: ${{ matrix.network }}
           chain_id: ${{ format('7357{0}', matrix.network) }}
@@ -248,6 +257,15 @@ env:
 * Use matrix builds for testing across multiple networks
 * Contract verification works automatically. Follow the guides for verification with [Hardhat](https://docs.tenderly.co/contract-verification/hardhat) and [Foundry](https://docs.tenderly.co/contract-verification/foundry).
 * Use unique chain IDs when possible (e.g. by prefixing with `7357`) to avoid transaction replay attacks.
+* If you don't want to use Github UI to add required variables, you can do the following with utilizing Github CLI. Commands that enable you do it are:
+```bash
+TENDERLY_PROJECT_NAME=...
+TENDERLY_ACCOUNT_NAME=...
+TENDERLY_ACCESS_KEY=...
+gh variable set TENDERLY_PROJECT_NAME --body ${TENDERLY_PROJECT_NAME}
+gh variable set TENDERLY_ACCOUNT_NAME --body ${TENDERLY_ACCOUNT_NAME}
+gh secret set TENDERLY_ACCESS_KEY --body ${TENDERLY_ACCESS_KEY}
+```
 
 ## License
 
