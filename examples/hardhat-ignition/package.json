@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "deploy:vnet": "yes | npx hardhat ignition deploy ./ignition/modules/Counter.js --network tenderly_ci --deployment-id deploy",
+    "deploy:vnet": "yes | npx hardhat ignition deploy .examples/hardhat-ignition/ignition/modules/Counter.ts --network tenderly_ci --deployment-id deploy",
     "test:vnet": "npx hardhat test --network tenderly_ci"
   },
   "keywords": [],

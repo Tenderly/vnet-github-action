@@ -223,6 +223,42 @@ jobs:
             --verify
 ```
 
+## Additional notes on Foundry Pipeline
+
+If you'd like to use specific address for the deployment and verification of contracts on Virtual TestNets you can do so by following these steps:
+
+1. Add your private key to GitHub Secrets (through UI or CLI)
+2. Update your workflow to include wallet funding and deployment:
+
+```yaml
+      - name: Fund Wallet
+        run: |
+          curl --location ${{ env.TENDERLY_ADMIN_RPC_URL }} \
+          --header 'Content-Type: application/json' \
+          --data '{
+            "jsonrpc": "2.0",
+            "method": "tenderly_setBalance",
+            "params": ["${{ secrets.WALLET_ADDRESS }}", "0xDE0B6B3A7640000"],
+            "id": "1234"
+          }'
+
+      - name: Deploy Contracts
+        env:
+          FOUNDRY_ETH_RPC_URL: ${{ env.TENDERLY_PUBLIC_RPC_URL }}
+          FOUNDRY_VERIFIER_URL: ${{ env.TENDERLY_FOUNDRY_VERIFICATION_URL }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          TENDERLY_ACCESS_TOKEN: ${{ secrets.TENDERLY_ACCESS_KEY }}
+        run: |
+          forge script script/Deploy.s.sol \
+            --private-key $PRIVATE_KEY \
+            --rpc-url $FOUNDRY_ETH_RPC_URL \
+            --verifier-url $FOUNDRY_VERIFIER_URL \
+            --etherscan-api-key $TENDERLY_ACCESS_TOKEN \
+            --slow \
+            --broadcast \
+            --verify
+```
+
 ## Advanced Configuration
 
 Advanced configuration examples demonstrate how to extend the basic Virtual TestNet setup for more complex scenarios, such as multi-network testing and custom chain configurations.
