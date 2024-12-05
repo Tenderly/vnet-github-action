@@ -1,6 +1,6 @@
 {
   "name": "vnet-github-action",
-  "version": "1.0.5",
+  "version": "1.0.8",
   "description": "GitHub Action that sets up a Tenderly Virtual TestNet for blockchain development and testing",
   "main": "dist/index.js",
   "scripts": {
