@@ -18,6 +18,18 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Setup Virtual TestNet
+        uses: Tenderly/vnet-github-action@v1.0.10
+        with:
+          mode: CI
+          access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
+          project_name: ${{ vars.TENDERLY_PROJECT_NAME }}
+          account_name: ${{ vars.TENDERLY_ACCOUNT_NAME }}
+          network_id: 1
+          chain_id: 73571
+          public_explorer: true
+          verification_visibility: 'src'
+
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
 
