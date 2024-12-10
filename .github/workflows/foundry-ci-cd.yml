@@ -81,7 +81,7 @@ jobs:
           --data '{
             "jsonrpc": "2.0",
             "method": "tenderly_setBalance",
-            "params": ["$WALLET_ADDRESS", "0xDE0B6B3A7640000"],
+            "params": [$WALLET_ADDRESS, "0xDE0B6B3A7640000"],
             "id": "1234"
           }'
 
