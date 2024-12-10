@@ -40,6 +40,7 @@ jobs:
       - name: Setup Virtual TestNet
         uses: Tenderly/vnet-github-action@v1.0.x
         with:
+          mode: CI
           access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
           project_name: ${{ vars.TENDERLY_PROJECT_NAME }}
           account_name: ${{ vars.TENDERLY_ACCOUNT_NAME }}
@@ -53,18 +54,19 @@ jobs:
 
 ## Inputs
 
-| Name                         | Required | Default              | Description                                                                   |
-| ---------------------------- | -------- | -------------------- | ----------------------------------------------------------------------------- |
-| `access_key`                 | Yes      | -                    | Tenderly API Access Key                                                       |
-| `project_name`               | Yes      | -                    | Tenderly Project Name                                                         |
-| `account_name`               | Yes      | -                    | Tenderly Account Name                                                         |
-| `testnet_name`               | No       | 'CI Virtual TestNet' | Display name for the Virtual TestNet                                          |
-| `network_id`                 | Yes      | 1                    | Network ID to fork (e.g., 1 for Ethereum mainnet) - integer                   |
-| `chain_id`                   | No       | -                    | Custom chain ID for Virtual TestNet (Recommended: prefix with 7357) - integer |
-| `block_number`               | No       | 'latest'             | Block number to fork from (must be a hex string, e.g., '0x1234567')           |
-| `public_explorer`            | No       | false                | Enable block explorer for the Virtual TestNet                                 |
-| `verification_visibility`    | No       | 'bytecode'           | Contract verification type ('abi', 'src', or 'bytecode')                      |
-| `state_sync`                 | No       | false                | Enable state synchronization with forked network                              |
+| Name                         | Required | Default              | Description                                                                                  |
+| ---------------------------- | -------- | -------------------- |----------------------------------------------------------------------------------------------|
+| `access_key`                 | Yes      | -                    | Tenderly API Access Key                                                                      |
+| `project_name`               | Yes      | -                    | Tenderly Project Name                                                                        |
+| `account_name`               | Yes      | -                    | Tenderly Account Name                                                                        |
+| `testnet_name`               | No       | 'CI Virtual TestNet' | Display name for the Virtual TestNet                                                         |
+| `network_id`                 | Yes      | 1                    | Network ID to fork (e.g., 1 for Ethereum mainnet) - integer                                  |
+| `chain_id`                   | No       | -                    | Custom chain ID for Virtual TestNet (Recommended: prefix with 7357) - integer                |
+| `block_number`               | No       | 'latest'             | Block number to fork from (must be a hex string, e.g., '0x1234567')                          |
+| `public_explorer`            | No       | false                | Enable block explorer for the Virtual TestNet                                                |
+| `verification_visibility`    | No       | 'bytecode'           | Contract verification type ('abi', 'src', or 'bytecode')                                     |
+| `state_sync`                 | No       | false                | Enable state synchronization with forked network                                             |
+| `mode`                       | No       | 'CI'                 | Action mode ('CI' or 'CD') - CI cleans up after completion, CD preserves the Virtual TestNet |
 
 ## Outputs
 
