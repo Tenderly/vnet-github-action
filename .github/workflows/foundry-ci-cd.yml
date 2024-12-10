@@ -76,14 +76,16 @@ jobs:
           TENDERLY_ADMIN_RPC_URL: ${{ env.TENDERLY_ADMIN_RPC_URL }}
           WALLET_ADDRESS: ${{ secrets.WALLET_ADDRESS }}
         run: |
-          curl --location $TENDERLY_ADMIN_RPC_URL \
+          curl --location "$TENDERLY_ADMIN_RPC_URL" \
           --header 'Content-Type: application/json' \
-          --data '{
+          --data @- << EOF
+          {
             "jsonrpc": "2.0",
             "method": "tenderly_setBalance",
-            "params": [$WALLET_ADDRESS, "0xDE0B6B3A7640000"],
+            "params": ["$WALLET_ADDRESS", "0xDE0B6B3A7640000"],
             "id": "1234"
-          }'
+          }
+          EOF
 
       - name: Deploy Contracts
         working-directory: ./examples/foundry
