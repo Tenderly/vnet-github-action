@@ -22,6 +22,7 @@ jobs:
         uses: foundry-rs/foundry-toolchain@v1
 
       - name: Build and Test
+        working-directory: ./examples/foundry
         run: |
           forge build
           forge test -vvv
@@ -51,6 +52,7 @@ jobs:
         uses: foundry-rs/foundry-toolchain@v1
 
       - name: Foundry Build
+        working-directory: ./examples/foundry
         run: |
           forge --version
           forge build --sizes
@@ -70,6 +72,7 @@ jobs:
           }'
 
       - name: Deploy Contracts
+        working-directory: ./examples/foundry
         env:
           FOUNDRY_ETH_RPC_URL: ${{ env.TENDERLY_PUBLIC_RPC_URL }}
           TENDERLY_CHAIN_ID: ${{ env.TENDERLY_CHAIN_ID }}
