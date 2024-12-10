@@ -1,6 +1,10 @@
 name: 'Tenderly Virtual TestNet Setup'
 description: 'Sets up a Tenderly Virtual TestNet and exposes RPC link as an environment variable'
 inputs:
+  mode:
+    description: 'Operation mode (CI or CD). CD mode will persist the TestNet and track deployments'
+    required: false
+    default: 'CI'
   access_key:
     description: 'Tenderly API Access Key'
     required: true

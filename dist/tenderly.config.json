@@ -1,0 +1,20 @@
+{
+    "cd_deployments": [
+      {
+        "name": "staging",
+        "testnet_name": "Staging TestNet",
+        "network_id": 1,
+        "chain_id": 73571,
+        "state_sync": true,
+        "public_explorer": true
+      },
+      {
+        "name": "production",
+        "testnet_name": "Production TestNet",
+        "network_id": 1,
+        "chain_id": 73572,
+        "state_sync": true,
+        "public_explorer": false
+      }
+    ]
+}

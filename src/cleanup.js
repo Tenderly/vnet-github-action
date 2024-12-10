@@ -3,6 +3,13 @@ const { stopVirtualTestNet } = require('./tenderly');
 
 async function cleanup() {
   try {
+    const mode = core.getInput('mode').toUpperCase();
+    
+    if (mode === 'CD') {
+      core.info('Running in CD mode - skipping TestNet cleanup');
+      return;
+    }
+
     const testnetId = process.env.TENDERLY_TESTNET_ID;
     if (!testnetId) {
       core.warning('No TestNet ID found, skipping cleanup');

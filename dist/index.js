@@ -35995,7 +35995,20 @@ module.exports = /*#__PURE__*/JSON.parse('{"application/1d-interleaved-parityfec
 /************************************************************************/
 var __webpack_exports__ = {};
 const core = __nccwpck_require__(7484);
+const fs = (__nccwpck_require__(9896).promises);
+const path = __nccwpck_require__(6928);
 const { createVirtualTestNet, setupTenderlyConfig } = __nccwpck_require__(8056);
+
+async function loadCdConfig() {
+  try {
+    const configPath = __nccwpck_require__.ab + "tenderly.config.json";
+    const configData = await fs.readFile(__nccwpck_require__.ab + "tenderly.config.json", 'utf8');
+    return JSON.parse(configData);
+  } catch (error) {
+    core.debug(`No tenderly.config.json found or invalid: ${error.message}`);
+    return null;
+  }
+}
 
 function generateSlug(testnetName) {
   const timestamp = Math.floor(Date.now() / 1000);
@@ -36046,6 +36059,7 @@ function validateInputs(inputs) {
 
 async function run() {
   try {
+    const mode = core.getInput('mode').toUpperCase();
     const inputs = {
       accessKey: core.getInput('access_key', { required: true, trimWhitespace: true }),
       projectName: core.getInput('project_name', { required: true, trimWhitespace: true }),
@@ -36058,6 +36072,26 @@ async function run() {
       publicExplorer: core.getBooleanInput('public_explorer', { trimWhitespace: true }),
       verificationVisibility: core.getInput('verification_visibility', { trimWhitespace: true })
     };
+
+    if (mode === 'CD') {
+      const config = await loadCdConfig();
+      if (!config) {
+        throw new Error('CD mode requires tenderly.config.json');
+      }
+      
+      // Store deployment info for tracking
+      const deploymentInfo = {
+        testnetId: null,
+        timestamp: new Date().toISOString(),
+        mode: 'CD',
+        environment: inputs.testnetName
+      };
+
+      await fs.writeFile(
+        path.join(process.cwd(), '.tenderly-deployments.json'),
+        JSON.stringify(deploymentInfo, null, 2)
+      );
+    }
 
     if (!inputs.publicExplorer) {
       inputs.verificationVisibility = 'bytecode'; // Default to bytecode if public explorer is not enabled

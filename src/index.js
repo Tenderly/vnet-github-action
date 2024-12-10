@@ -1,5 +1,18 @@
 const core = require('@actions/core');
+const fs = require('fs').promises;
+const path = require('path');
 const { createVirtualTestNet, setupTenderlyConfig } = require('./tenderly');
+
+async function loadCdConfig() {
+  try {
+    const configPath = path.join(process.cwd(), 'tenderly.config.json');
+    const configData = await fs.readFile(configPath, 'utf8');
+    return JSON.parse(configData);
+  } catch (error) {
+    core.debug(`No tenderly.config.json found or invalid: ${error.message}`);
+    return null;
+  }
+}
 
 function generateSlug(testnetName) {
   const timestamp = Math.floor(Date.now() / 1000);
@@ -50,6 +63,7 @@ function validateInputs(inputs) {
 
 async function run() {
   try {
+    const mode = core.getInput('mode').toUpperCase();
     const inputs = {
       accessKey: core.getInput('access_key', { required: true, trimWhitespace: true }),
       projectName: core.getInput('project_name', { required: true, trimWhitespace: true }),
@@ -62,6 +76,26 @@ async function run() {
       publicExplorer: core.getBooleanInput('public_explorer', { trimWhitespace: true }),
       verificationVisibility: core.getInput('verification_visibility', { trimWhitespace: true })
     };
+
+    if (mode === 'CD') {
+      const config = await loadCdConfig();
+      if (!config) {
+        throw new Error('CD mode requires tenderly.config.json');
+      }
+      
+      // Store deployment info for tracking
+      const deploymentInfo = {
+        testnetId: null,
+        timestamp: new Date().toISOString(),
+        mode: 'CD',
+        environment: inputs.testnetName
+      };
+
+      await fs.writeFile(
+        path.join(process.cwd(), '.tenderly-deployments.json'),
+        JSON.stringify(deploymentInfo, null, 2)
+      );
+    }
 
     if (!inputs.publicExplorer) {
       inputs.verificationVisibility = 'bytecode'; // Default to bytecode if public explorer is not enabled

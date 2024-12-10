@@ -1,12 +1,16 @@
-name: Hardhat Pipeline
-on: [push, pull_request]
+name: Hardhat Deployment
+on:
+  push:
+    branches:
+      - main
+      - master
 env:
   DEBUG: '@tenderly/github-action'
-  ## Needed available as env variables for hardhat.config.js
   TENDERLY_PROJECT_NAME: ${{ vars.TENDERLY_PROJECT_NAME }}
   TENDERLY_ACCOUNT_NAME: ${{ vars.TENDERLY_ACCOUNT_NAME }}
+
 jobs:
-  test:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,12 +22,13 @@ jobs:
           cache: 'npm'
       
       - name: Setup Virtual TestNet
-        uses: Tenderly/vnet-github-action@v1.0.9
+        uses: Tenderly/vnet-github-action@v1.0.9a
         with:
+          mode: CD
           access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
           project_name: ${{ vars.TENDERLY_PROJECT_NAME }}
           account_name: ${{ vars.TENDERLY_ACCOUNT_NAME }}
-          testnet_name: "Staging TestNet"
+          testnet_name: "Production Network"
           network_id: 1
           chain_id: 1
           state_sync: true
@@ -33,7 +38,7 @@ jobs:
       - name: Install dependencies
         run: npm install
       
-      - name: Run Tests
+      - name: Run Pre-deployment Tests
         run: npm run test:vnet
         working-directory: examples/hardhat-ignition
 
