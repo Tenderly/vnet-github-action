@@ -42,7 +42,9 @@ jobs:
       - name: Deploy Contracts
         run: npm run deploy:vnet
         working-directory: examples/hardhat-ignition
+
   deploy:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

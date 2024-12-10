@@ -9,8 +9,6 @@ env:
   TENDERLY_ACCESS_KEY: ${{ secrets.TENDERLY_ACCESS_KEY }}
   TENDERLY_PROJECT_NAME: ${{ vars.TENDERLY_PROJECT_NAME }}
   TENDERLY_ACCOUNT_NAME: ${{ vars.TENDERLY_ACCOUNT_NAME }}
-  TENDERLY_CHAIN_ID: ${{ env.TENDERLY_CHAIN_ID }}
-  TENDERLY_ADMIN_RPC_URL: ${{ env.TENDERLY_ADMIN_RPC_URL }}
 
 jobs:
   test:
@@ -58,19 +56,23 @@ jobs:
           forge build --sizes
 
       - name: Fund Wallet
+        env:
+          TENDERLY_ADMIN_RPC_URL: ${{ env.TENDERLY_ADMIN_RPC_URL }}
+          WALLET_ADDRESS: ${{ secrets.WALLET_ADDRESS }}
         run: |
-          curl --location ${{ env.TENDERLY_ADMIN_RPC_URL }} \
+          curl --location $TENDERLY_ADMIN_RPC_URL \
           --header 'Content-Type: application/json' \
           --data '{
             "jsonrpc": "2.0",
             "method": "tenderly_setBalance",
-            "params": ["${{ secrets.WALLET_ADDRESS }}", "0xDE0B6B3A7640000"],
+            "params": ["$WALLET_ADDRESS", "0xDE0B6B3A7640000"],
             "id": "1234"
           }'
 
       - name: Deploy Contracts
         env:
           FOUNDRY_ETH_RPC_URL: ${{ env.TENDERLY_PUBLIC_RPC_URL }}
+          TENDERLY_CHAIN_ID: ${{ env.TENDERLY_CHAIN_ID }}
           FOUNDRY_VERIFIER_URL: ${{ env.TENDERLY_FOUNDRY_VERIFICATION_URL }}
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           TENDERLY_ACCESS_TOKEN: ${{ secrets.TENDERLY_ACCESS_KEY }}
