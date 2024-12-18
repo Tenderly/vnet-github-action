@@ -2,6 +2,7 @@ const core = require('@actions/core');
 const fs = require('fs').promises;
 const path = require('path');
 const { createVirtualTestNet, setupTenderlyConfig } = require('./tenderly');
+const github = require('@actions/github');
 
 async function loadCdConfig() {
   try {
@@ -15,14 +16,14 @@ async function loadCdConfig() {
 }
 
 function generateSlug(testnetName) {
-  const timestamp = Math.floor(Date.now() / 1000);
-  const baseSlug = testnetName
+  const baseSlug = `${testnetName}-${github.context.workflow}-${github.context.runId}-${github.context.runNumber}-${github.context.job}`
     .toLowerCase()           // convert to lowercase
     .trim()                 // remove leading/trailing spaces
     .replace(/\s+/g, '-')   // replace spaces with hyphens
+    .replace(/\//g, '-')   // replace spaces with hyphens
     .replace(/[^a-z0-9-]/g, ''); // remove special characters
-  
-  return `${baseSlug}-${timestamp}`;
+  core.debug(github.context)
+  return baseSlug;
 }
 
 function validateInputs(inputs) {
@@ -103,6 +104,7 @@ async function run() {
 
     // Generate slug from testnet name
     inputs.testnetSlug = generateSlug(inputs.testnetName);
+    inputs.testnetName = inputs.testnetSlug;
     core.debug(`Generated testnet slug: ${inputs.testnetSlug}`);
 
     validateInputs(inputs);

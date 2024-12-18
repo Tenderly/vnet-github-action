@@ -25,7 +25,7 @@ jobs:
           access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
           project_name: ${{ vars.TENDERLY_PROJECT_NAME }}
           account_name: ${{ vars.TENDERLY_ACCOUNT_NAME }}
-          testnet_name: "Staging TestNet"
+          testnet_name: "Testing"
           network_id: 1
           chain_id: 1
           state_sync: true
@@ -34,13 +34,10 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+        working-directory: examples/hardhat-ignition
       
       - name: Run Tests
         run: npm run test:vnet
-        working-directory: examples/hardhat-ignition
-
-      - name: Deploy Contracts
-        run: npm run deploy:vnet
         working-directory: examples/hardhat-ignition
 
   deploy:
@@ -62,18 +59,15 @@ jobs:
           access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
           project_name: ${{ vars.TENDERLY_PROJECT_NAME }}
           account_name: ${{ vars.TENDERLY_ACCOUNT_NAME }}
-          testnet_name: "Production Network"
+          testnet_name: "Staging"
           network_id: 1
-          chain_id: 1
+          chain_id: 1 # custom chain ID
           state_sync: true
           public_explorer: true
           verification_visibility: bytecode
 
       - name: Install dependencies
         run: npm install
-      
-      - name: Run Pre-deployment Tests
-        run: npm run test:vnet
         working-directory: examples/hardhat-ignition
 
       - name: Deploy Contracts

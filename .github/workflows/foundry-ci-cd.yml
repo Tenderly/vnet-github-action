@@ -9,7 +9,7 @@ env:
   TENDERLY_ACCESS_KEY: ${{ secrets.TENDERLY_ACCESS_KEY }}
   TENDERLY_PROJECT_NAME: ${{ vars.TENDERLY_PROJECT_NAME }}
   TENDERLY_ACCOUNT_NAME: ${{ vars.TENDERLY_ACCOUNT_NAME }}
-
+  DEBUG: '@tenderly/github-action'
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -17,18 +17,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-
-      - name: Setup Virtual TestNet
-        uses: Tenderly/vnet-github-action@v1.0.10
-        with:
-          mode: CI
-          access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
-          project_name: ${{ vars.TENDERLY_PROJECT_NAME }}
-          account_name: ${{ vars.TENDERLY_ACCOUNT_NAME }}
-          network_id: 1
-          chain_id: 73571
-          public_explorer: true
-          verification_visibility: 'src'
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
@@ -56,8 +44,9 @@ jobs:
           access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
           project_name: ${{ vars.TENDERLY_PROJECT_NAME }}
           account_name: ${{ vars.TENDERLY_ACCOUNT_NAME }}
+          testnet_name: "Staging"
           network_id: 1
-          chain_id: 73571
+          chain_id: 73571 # custom chain ID
           public_explorer: true
           verification_visibility: 'src'
 
@@ -83,7 +72,7 @@ jobs:
             "jsonrpc": "2.0",
             "method": "tenderly_setBalance",
             "params": ["$WALLET_ADDRESS", "0xDE0B6B3A7640000"],
-            "id": "1234"
+            "id": "1"
           }
           EOF
 
