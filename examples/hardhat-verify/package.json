@@ -1,0 +1,16 @@
+{
+  "name": "hardhat-verify",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@tenderly/hardhat-tenderly": "^2.5.1",
+    "hardhat": "^2.22.17"
+  }
+}

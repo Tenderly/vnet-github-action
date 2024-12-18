@@ -7,8 +7,6 @@ on:
 
 env:
   TENDERLY_ACCESS_KEY: ${{ secrets.TENDERLY_ACCESS_KEY }}
-  TENDERLY_PROJECT_NAME: ${{ vars.TENDERLY_PROJECT_NAME }}
-  TENDERLY_ACCOUNT_NAME: ${{ vars.TENDERLY_ACCOUNT_NAME }}
   DEBUG: '@tenderly/github-action'
 jobs:
   test:
@@ -24,7 +22,6 @@ jobs:
       - name: Build and Test
         working-directory: ./examples/foundry
         run: |
-          sed -i "s/\${TENDERLY_CHAIN_ID}/${{ env.TENDERLY_CHAIN_ID }}/g" foundry.toml
           forge build
           forge test -vvv
 
@@ -38,7 +35,7 @@ jobs:
           submodules: recursive
 
       - name: Setup Virtual TestNet
-        uses: Tenderly/vnet-github-action@v1.0.10
+        uses: ./
         with:
           mode: CD
           access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
@@ -46,7 +43,7 @@ jobs:
           account_name: ${{ vars.TENDERLY_ACCOUNT_NAME }}
           testnet_name: "Staging"
           network_id: 1
-          chain_id: 73571 # custom chain ID
+          chain_id: 1 # custom chain ID
           public_explorer: true
           verification_visibility: 'src'
 
@@ -56,40 +53,34 @@ jobs:
       - name: Foundry Build
         working-directory: ./examples/foundry
         run: |
-          sed -i "s/\${TENDERLY_CHAIN_ID}/${{ env.TENDERLY_CHAIN_ID }}/g" foundry.toml
+          sed -e "s|\${TENDERLY_ACCESS_KEY}|$TENDERLY_ACCESS_KEY|g" \
+              -e "s|\${TENDERLY_FOUNDRY_VERIFICATION_URL}|$TENDERLY_FOUNDRY_VERIFICATION_URL|g" \
+              -e "s/\(unknown_chain[[:space:]]*=[[:space:]]*{[^}]*chain[[:space:]]*=[[:space:]]*\)[0-9][0-9]*/\1$TENDERLY_CHAIN_ID/g" \
+              foundry.toml > foundry.toml.tmp && mv foundry.toml.tmp foundry.toml
           forge --version
           forge build --sizes
 
       - name: Fund Wallet
-        env:
-          TENDERLY_ADMIN_RPC_URL: ${{ env.TENDERLY_ADMIN_RPC_URL }}
-          WALLET_ADDRESS: ${{ secrets.WALLET_ADDRESS }}
         run: |
-          curl --location "$TENDERLY_ADMIN_RPC_URL" \
+          curl --location "${{ env.TENDERLY_ADMIN_RPC_URL }}" \
           --header 'Content-Type: application/json' \
           --data @- << EOF
           {
             "jsonrpc": "2.0",
             "method": "tenderly_setBalance",
-            "params": ["$WALLET_ADDRESS", "0xDE0B6B3A7640000"],
+            "params": ["${{ secrets.DEPLOYER_WALLET_ADDRESS }}", "0xDE0B6B3A7640000"],
             "id": "1"
           }
           EOF
 
       - name: Deploy Contracts
         working-directory: ./examples/foundry
-        env:
-          FOUNDRY_ETH_RPC_URL: ${{ env.TENDERLY_PUBLIC_RPC_URL }}
-          TENDERLY_CHAIN_ID: ${{ env.TENDERLY_CHAIN_ID }}
-          FOUNDRY_VERIFIER_URL: ${{ env.TENDERLY_FOUNDRY_VERIFICATION_URL }}
-          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-          TENDERLY_ACCESS_TOKEN: ${{ secrets.TENDERLY_ACCESS_KEY }}
         run: |
           forge script script/Counter.s.sol \
-            --private-key $PRIVATE_KEY \
-            --rpc-url $FOUNDRY_ETH_RPC_URL \
-            --verifier-url $FOUNDRY_VERIFIER_URL \
-            --etherscan-api-key $TENDERLY_ACCESS_TOKEN \
+            --private-key ${{ secrets.DEPLOYER_PRIVATE_KEY }} \
+            --rpc-url ${{ env.TENDERLY_PUBLIC_RPC_URL }} \
+            --verifier-url ${{ env.TENDERLY_FOUNDRY_VERIFICATION_URL }} \
+            --etherscan-api-key $TENDERLY_ACCESS_KEY \
             --slow \
             --broadcast \
             --verify
