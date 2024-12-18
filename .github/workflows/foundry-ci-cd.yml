@@ -43,7 +43,7 @@ jobs:
           account_name: ${{ vars.TENDERLY_ACCOUNT_NAME }}
           testnet_name: "Staging"
           network_id: 1
-          chain_id: 1 # custom chain ID
+          chain_id: 73571 # custom chain ID
           public_explorer: true
           verification_visibility: 'src'
 
