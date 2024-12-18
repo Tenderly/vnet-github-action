@@ -35,7 +35,7 @@ jobs:
           submodules: recursive
 
       - name: Setup Virtual TestNet
-        uses: ./
+        uses: Tenderly/vnet-github-action@v1.0.10
         with:
           mode: CD
           access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
