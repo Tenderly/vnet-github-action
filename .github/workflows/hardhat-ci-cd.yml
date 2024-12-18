@@ -2,7 +2,6 @@ name: Hardhat CI/CD
 
 on: [push, pull_request]
 env:
-  DEBUG: '@tenderly/github-action'
   ## Needed available as env variables for hardhat.config.js
   TENDERLY_PROJECT_NAME: ${{ vars.TENDERLY_PROJECT_NAME }}
   TENDERLY_ACCOUNT_NAME: ${{ vars.TENDERLY_ACCOUNT_NAME }}
@@ -19,7 +18,7 @@ jobs:
           cache: 'npm'
       
       - name: Setup Virtual TestNet
-        uses: Tenderly/vnet-github-action@v1.0.11
+        uses: Tenderly/vnet-github-action@V1.0.11
         with:
           mode: CI
           access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
@@ -53,7 +52,7 @@ jobs:
           cache: 'npm'
       
       - name: Setup Virtual TestNet
-        uses: Tenderly/vnet-github-action@v1.0.11
+        uses: Tenderly/vnet-github-action@V1.0.11
         with:
           mode: CD
           access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
