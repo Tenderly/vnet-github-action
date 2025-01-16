@@ -6,41 +6,41 @@ env:
   TENDERLY_PROJECT_NAME: ${{ vars.TENDERLY_PROJECT_NAME }}
   TENDERLY_ACCOUNT_NAME: ${{ vars.TENDERLY_ACCOUNT_NAME }}
 jobs:
-#  test:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: actions/checkout@v4
-#
-#      - name: Setup Node.js
-#        uses: actions/setup-node@v4
-#        with:
-#          node-version: '20'
-#          cache: 'npm'
-#
-#      - name: Setup Virtual TestNet
-#        uses: ./
-#        with:
-#          mode: CI    # pauses testnet after deployment
-#          access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
-#          project_name: ${{ vars.TENDERLY_PROJECT_NAME }}
-#          account_name: ${{ vars.TENDERLY_ACCOUNT_NAME }}
-#          testnet_name: "Staging"
-#          network_id: 1
-#          chain_id_prefix: 7357
-#          public_explorer: true
-#          verification_visibility: 'src'
-#          push_on_complete: true
-#
-#      - name: Install dependencies
-#        run: npm install
-#        working-directory: examples/hardhat-ignition
-#
-#      - name: Run Tests
-#        run: npm run test:1
-#        working-directory: examples/hardhat-ignition
+ test:
+   runs-on: ubuntu-latest
+   steps:
+     - uses: actions/checkout@v4
+
+     - name: Setup Node.js
+       uses: actions/setup-node@v4
+       with:
+         node-version: '20'
+         cache: 'npm'
+
+     - name: Setup Virtual TestNet
+       uses: tenderly/vnet-github-action@v1.0.12
+       with:
+         mode: CI    # pauses testnet after deployment
+         access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
+         project_name: ${{ vars.TENDERLY_PROJECT_NAME }}
+         account_name: ${{ vars.TENDERLY_ACCOUNT_NAME }}
+         testnet_name: "Staging"
+         network_id: 1
+         chain_id_prefix: 7357
+         public_explorer: true
+         verification_visibility: 'src'
+         push_on_complete: true
+
+     - name: Install dependencies
+       run: npm install
+       working-directory: examples/hardhat-ignition
+
+     - name: Run Tests
+       run: npm run test:1
+       working-directory: examples/hardhat-ignition
 
   deploy:
-#    needs: test
+    needs: test
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -54,7 +54,7 @@ jobs:
           cache: 'npm'
       
       - name: Setup Virtual TestNet
-        uses: ./
+        uses: tenderly/vnet-github-action@v1.0.12
         with:
           mode: CD
           access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
