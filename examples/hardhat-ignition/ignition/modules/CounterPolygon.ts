@@ -3,7 +3,7 @@
 
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
-const CounterModule = buildModule("Counter", (m) => {
+const CounterModule = buildModule("CounterPolygon", (m) => {
 
   const counter = m.contract("Counter", [], {
     id: "Counter_v1",

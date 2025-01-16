@@ -1,0 +1,83 @@
+name: Foundry CI/CD
+
+on:
+  push:
+  pull_request:
+
+env:
+  TENDERLY_ACCESS_KEY: ${{ secrets.TENDERLY_ACCESS_KEY }}
+  DEPLOYER_WALLET_ADDRESS: ${{ vars.DEPLOYER_WALLET_ADDRESS }}
+  DEBUG: ./
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./examples/foundry
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Virtual TestNet
+        uses: ./
+        with:
+          mode: CD
+          access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
+          project_name: ${{ vars.TENDERLY_PROJECT_NAME }}
+          account_name: ${{ vars.TENDERLY_ACCOUNT_NAME }}
+          testnet_name: "Staging"
+          network_id: | 
+            1
+            137
+          chain_id_prefix: 7357
+          public_explorer: true
+          verification_visibility: 'src'
+          push_on_complete: true
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Fund Deployer Account on Mainnet
+        run: |
+          source ../../fixtures/load-fixtures.sh
+          update_foundry_config_and_build $TENDERLY_ACCESS_KEY $TENDERLY_FOUNDRY_VERIFICATION_URL_1  $TENDERLY_CHAIN_ID_1
+          set_wallet_balance $TENDERLY_ADMIN_RPC_URL_1 ${{ vars.DEPLOYER_WALLET_ADDRESS }} $HUNDRED_ETH
+
+      - name: Deploy Contracts Mainnet
+        run: |
+          forge build --sizes
+          forge script script/Counter.s.sol \
+            --private-key ${{ secrets.DEPLOYER_PRIVATE_KEY }} \
+            --rpc-url ${{ env.TENDERLY_PUBLIC_RPC_URL_1 }} \
+            --verifier-url ${{ env.TENDERLY_FOUNDRY_VERIFICATION_URL_1 }} \
+            --etherscan-api-key $TENDERLY_ACCESS_KEY \
+            --slow \
+            --broadcast \
+            --verify \
+            --json > $BUILD_OUTPUT_FILE_1
+
+      - name: Fund Deployer Account on Polygon
+        run: |
+          source ../../fixtures/load-fixtures.sh
+          update_foundry_config_and_build $TENDERLY_ACCESS_KEY $TENDERLY_FOUNDRY_VERIFICATION_URL_137  $TENDERLY_CHAIN_ID_137
+          set_wallet_balance $TENDERLY_ADMIN_RPC_URL_137 ${{ vars.DEPLOYER_WALLET_ADDRESS }} $HUNDRED_ETH
+
+      - name: Deploy Contracts Polygon
+        working-directory: ./examples/foundry
+        run: |
+          source ../../fixtures/load-fixtures.sh
+          update_foundry_config_and_build $TENDERLY_ACCESS_KEY $TENDERLY_FOUNDRY_VERIFICATION_URL_137 $TENDERLY_CHAIN_ID_137
+          set_wallet_balance $TENDERLY_ADMIN_RPC_URL_137 ${{ vars.DEPLOYER_WALLET_ADDRESS }} $HUNDRED_ETH
+
+          forge script script/Counter.s.sol \
+            --private-key ${{ secrets.DEPLOYER_PRIVATE_KEY }} \
+            --rpc-url ${{ env.TENDERLY_PUBLIC_RPC_URL_137 }} \
+            --verifier-url ${{ env.TENDERLY_FOUNDRY_VERIFICATION_URL_137 }} \
+            --etherscan-api-key $TENDERLY_ACCESS_KEY \
+            --slow \
+            --broadcast \
+            --verify \
+            --json > $BUILD_OUTPUT_FILE_137

@@ -33422,159 +33422,457 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
-/***/ 8056:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+/***/ 7905:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
-const core = __nccwpck_require__(7484);
-const axios = __nccwpck_require__(7269);
-const path = __nccwpck_require__(6928);
-const os = __nccwpck_require__(857);
-const fs = __nccwpck_require__(1943);
+"use strict";
 
-const API_BASE_URL = 'https://api.tenderly.co/api/v1';
-
-async function createVirtualTestNet(inputs) {
-  try {
-    core.debug('Creating Virtual TestNet with inputs: ' + JSON.stringify(inputs));
-
-    const slug = generateSlug(inputs.testnetName);
-
-    core.debug(`Making API request to create TestNet with slug: ${slug}`);
-
-    const requestData = {
-      slug,
-      display_name: inputs.testnetName,
-      fork_config: {
-        network_id: parseInt(inputs.networkId),
-        block_number: inputs.blockNumber
-      },
-      virtual_network_config: {
-        chain_config: {
-          chain_id: parseInt(inputs.chainId)
-        }
-      },
-      sync_state_config: {
-        enabled: inputs.stateSync
-      },
-      explorer_page_config: {
-        enabled: inputs.publicExplorer,
-        verification_visibility: inputs.verificationVisibility
-      }
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
     };
-
-    core.debug('Request data: ' + JSON.stringify(requestData));
-
-    const response = await axios({
-      method: 'post',
-      url: `${API_BASE_URL}/account/${inputs.accountName}/project/${inputs.projectName}/vnets`,
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'X-Access-Key': inputs.accessKey
-      },
-      data: requestData
-    });
-
-    const { data } = response;
-    core.debug('API Response: ' + JSON.stringify(data));
-
-    if (!data) {
-      throw new Error('No data returned from Tenderly API');
-    }
-    if (!Array.isArray(data.rpcs)) {
-      throw new Error(`Invalid RPC data in response: ${JSON.stringify(data)}`);
-    }
-
-    const adminRpc = data.rpcs.find(rpc => rpc.name === 'Admin RPC');
-    const publicRpc = data.rpcs.find(rpc => rpc.name === 'Public RPC');
-
-    if (!adminRpc || !publicRpc) {
-      throw new Error(`Missing RPC endpoints in response: ${JSON.stringify(data.rpcs)}`);
-    }
-
-    return {
-      id: data.id,
-      adminRpcUrl: adminRpc.url,
-      publicRpcUrl: publicRpc.url
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
     };
-
-  } catch (error) {
-    if (error.response) {
-      core.debug('API Error Response: ' + JSON.stringify(error.response.data));
-      const message = error.response.data.error?.message || JSON.stringify(error.response.data);
-      throw new Error(`Failed to create TestNet: ${message}`);
-    }
-    core.debug('Error: ' + error.message);
-    throw error;
-  }
-}
-
-function generateSlug(testnetName) {
-  const timestamp = Math.floor(Date.now() / 1000);
-  const baseSlug = testnetName
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9-]/g, '');
-  
-  return `${baseSlug}-${timestamp}`;
-}
-
-
-async function setupTenderlyConfig(accessKey) {
-  try {
-    const configDir = path.join(os.homedir(), '.tenderly');
-    const configFile = path.join(configDir, 'config.yaml');
-
-    await fs.mkdir(configDir, { recursive: true });
-    await fs.writeFile(configFile, `access_key: ${accessKey}`);
-    
-    core.debug('Tenderly config file created successfully');
-  } catch (error) {
-    throw new Error(`Failed to create Tenderly config: ${error.message}`);
-  }
-}
-
-async function stopVirtualTestNet(inputs) {
-  try {
-    core.debug('Stopping Virtual TestNet...');
-    
-    if (!inputs.testnetId) {
-      throw new Error('TestNet ID is required for cleanup');
-    }
-
-    const response = await axios({
-      method: 'patch',
-      url: `${API_BASE_URL}/account/${inputs.accountName}/project/${inputs.projectName}/vnets/${inputs.testnetId}`,
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'X-Access-Key': inputs.accessKey
-      },
-      data: {
-        status: 'stopped'
-      }
-    });
-
-    core.debug('TestNet stopped successfully');
-    return response.data;
-
-  } catch (error) {
-    if (error.response) {
-      core.debug('API Error Response:', JSON.stringify(error.response.data, null, 2));
-      const message = error.response.data.error?.message || JSON.stringify(error.response.data);
-      throw new Error(`Failed to stop TestNet: ${message}`);
-    }
-    core.debug('Error:', error);
-    throw error;
-  }
-}
-
-module.exports = {
-  createVirtualTestNet,
-  stopVirtualTestNet,
-  setupTenderlyConfig
+})();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
 };
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.infraDir = exports.buildOutDir = exports.tmpBuildOutDir = exports.deploymentsDir = void 0;
+exports.setupDeploymentsFolder = setupDeploymentsFolder;
+exports.storeInfrastructureInfo = storeInfrastructureInfo;
+exports.infraFileForCurrentJob = infraFileForCurrentJob;
+exports.readInfraForCurrentJob = readInfraForCurrentJob;
+exports.sanitizeFileName = sanitizeFileName;
+exports.createInfraDir = createInfraDir;
+const fs_1 = __nccwpck_require__(9896);
+const io = __importStar(__nccwpck_require__(4994));
+const core = __importStar(__nccwpck_require__(7484));
+const fs_2 = __nccwpck_require__(9896);
+const path_1 = __importDefault(__nccwpck_require__(6928));
+const github = __importStar(__nccwpck_require__(3228));
+exports.deploymentsDir = path_1.default.join(process.env.GITHUB_WORKSPACE || "", '/.tenderly');
+const tmpBuildOutDir = () => path_1.default.join(exports.deploymentsDir, 'tmp');
+exports.tmpBuildOutDir = tmpBuildOutDir;
+const buildOutDir = () => exports.deploymentsDir;
+exports.buildOutDir = buildOutDir;
+const infraDir = () => path_1.default.join(exports.deploymentsDir, "infra");
+exports.infraDir = infraDir;
+async function setupDeploymentsFolder() {
+    const tmpDir = (0, exports.tmpBuildOutDir)();
+    if (!(0, fs_1.existsSync)(tmpDir)) {
+        await io.mkdirP(tmpDir);
+        core.info("TMP deployment folder " + tmpDir);
+    }
+    // Ensure .tenderly directory exists
+    const tenderlyDir = path_1.default.join(process.env.GITHUB_WORKSPACE || '', '.tenderly');
+    if (!(0, fs_1.existsSync)(tenderlyDir)) {
+        await io.mkdirP(tenderlyDir);
+        core.info("Created .tenderly folder");
+    }
+    core.info("Created deployments folder " + exports.deploymentsDir);
+}
+async function storeInfrastructureInfo(networks) {
+    try {
+        const infraInfo = {
+            networks,
+            timestamp: new Date().toISOString(),
+            githubContext: {
+                workflow: process.env.GITHUB_WORKFLOW || '',
+                runId: process.env.GITHUB_RUN_ID || '',
+                runNumber: process.env.GITHUB_RUN_NUMBER || '',
+                job: process.env.GITHUB_JOB || ''
+            }
+        };
+        const infraFile = infraFileForCurrentJob();
+        await fs_2.promises.writeFile(infraFile, JSON.stringify(infraInfo, null, 2));
+        core.info(`Infrastructure information stored in ${infraFile}`);
+    }
+    catch (error) {
+        const err = error;
+        core.warning(`Failed to store infrastructure information: ${err.message}`);
+    }
+}
+function infraFileForCurrentJob() {
+    const jobFileName = sanitizeFileName(`${github.context.runNumber}-${github.context.workflow}-${github.context.job}`);
+    return path_1.default.join((0, exports.infraDir)(), `${jobFileName}.json`);
+}
+async function readInfraForCurrentJob() {
+    try {
+        try {
+            const content = await fs_2.promises.readFile(infraFileForCurrentJob(), 'utf8');
+            return JSON.parse(content);
+        }
+        catch (error) {
+            core.debug(`No infrastructure file found at ${infraFileForCurrentJob()}`);
+            return null;
+        }
+    }
+    catch (error) {
+        const err = error;
+        core.warning(`Failed to read infrastructure file: ${err.message}`);
+        return null;
+    }
+}
+function sanitizeFileName(name) {
+    return name
+        .replace(/\//g, '-') // Replace forward slashes with hyphens
+        .replace(/\s+/g, '-') // Replace spaces with hyphens
+        .replace(/[^a-zA-Z0-9-]/g, '') // Remove any characters that aren't alphanumeric or hyphens
+        .toLowerCase();
+}
+async function createInfraDir() {
+    if (!(0, fs_1.existsSync)((0, exports.infraDir)())) {
+        await fs_2.promises.mkdir((0, exports.infraDir)(), { recursive: true });
+    }
+}
+
+
+/***/ }),
+
+/***/ 9407:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const core = __importStar(__nccwpck_require__(7484));
+const github = __importStar(__nccwpck_require__(3228));
+const tenderly_1 = __nccwpck_require__(7450);
+const deployment_info_1 = __nccwpck_require__(7905);
+function buildSlug() {
+    return `${github.context.runNumber}-${github.context.runId}`;
+}
+function generateSlug(testnetName, networkId) {
+    return `${github.context.runNumber}-${testnetName}-net-${networkId}-${github.context.workflow}-${github.context.job}-${github.context.runId}`
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, '-')
+        .replace(/\//g, '-')
+        .replace(/[^a-z0-9-]/g, '');
+}
+function validateInputs(inputs) {
+    const requiredInputs = {
+        accessKey: { required: true },
+        projectName: { required: true },
+        accountName: { required: true },
+        testnetName: { required: true },
+        networkId: { required: true, isNumeric: true },
+        blockNumber: { required: true },
+        publicExplorer: { required: false, isBoolean: true },
+        verificationVisibility: { required: false, isOneOf: ['bytecode', 'abi', 'src'] }
+    };
+    Object.entries(requiredInputs).forEach(([key, rules]) => {
+        const value = inputs[key];
+        if (rules.required && (!value || String(value).trim() === '')) {
+            throw new Error(`Input '${key}' is required`);
+        }
+        if ('isNumeric' in rules && value && isNaN(parseInt(String(value)))) {
+            throw new Error(`Input '${key}' must be a valid number`);
+        }
+        if ('isBoolean' in rules && value !== undefined && typeof value !== 'boolean') {
+            throw new Error(`Input '${key}' must be a boolean`);
+        }
+        if ('isOneOf' in rules && value && !rules.isOneOf.includes(value)) {
+            throw new Error(`Input '${key}' must be one of: ${rules.isOneOf.join(', ')}`);
+        }
+    });
+    core.debug('Input validation passed');
+    return true;
+}
+function exportWithNetworkId(key, value, networkId) {
+    core.exportVariable(`${key}_${networkId}`, value);
+}
+async function run() {
+    try {
+        const mode = core.getInput('mode').toUpperCase();
+        const chainIdPrefix = core.getInput('chain_id_prefix', { trimWhitespace: true });
+        const inputs = {
+            accessKey: core.getInput('access_key', { required: true, trimWhitespace: true }),
+            projectName: core.getInput('project_name', { required: true, trimWhitespace: true }),
+            accountName: core.getInput('account_name', { required: true, trimWhitespace: true }),
+            testnetName: core.getInput('testnet_name', { required: true, trimWhitespace: true }),
+            blockNumber: core.getInput('block_number', { required: true, trimWhitespace: true }),
+            stateSync: core.getBooleanInput('state_sync', { trimWhitespace: true }),
+            publicExplorer: core.getBooleanInput('public_explorer', { trimWhitespace: true }),
+            verificationVisibility: core.getInput('verification_visibility', { trimWhitespace: true }),
+            networkId: '',
+            chainId: 0
+        };
+        core.exportVariable('TENDERLY_ACCOUNT_NAME', inputs.accountName);
+        core.exportVariable('TENDERLY_PROJECT_NAME', inputs.projectName);
+        core.exportVariable('TENDERLY_ACCESS_KEY', inputs.accessKey);
+        if (!inputs.publicExplorer) {
+            inputs.verificationVisibility = 'bytecode';
+        }
+        const networkIds = core.getMultilineInput("network_id");
+        const networkInfos = {};
+        await Promise.all(networkIds.map(async (networkId) => {
+            const networkInputs = {
+                ...inputs,
+                networkId,
+                chainId: parseInt(chainIdPrefix + networkId),
+                testnetSlug: generateSlug(inputs.testnetName, networkId)
+            };
+            networkInputs.testnetName = networkInputs.testnetSlug || '';
+            validateInputs(networkInputs);
+            const testNet = await (0, tenderly_1.createVirtualTestNet)(networkInputs);
+            // Store network info
+            networkInfos[networkId] = {
+                ...testNet,
+                networkId,
+                chainId: networkInputs.chainId,
+                testnetSlug: networkInputs.testnetSlug || '',
+                explorerUrl: inputs.publicExplorer ? `https://dashboard.tenderly.co/${inputs.accountName}/${inputs.projectName}/testnet/${testNet.id}` : undefined
+            };
+            exportWithNetworkId('TENDERLY_TESTNET_ID', testNet.id, networkId);
+            exportWithNetworkId('TENDERLY_ADMIN_RPC_URL', testNet.adminRpcUrl, networkId);
+            exportWithNetworkId('TENDERLY_PUBLIC_RPC_URL', testNet.publicRpcUrl, networkId);
+            exportWithNetworkId('TENDERLY_TESTNET_SLUG', networkInputs.testnetSlug || '', networkId);
+            exportWithNetworkId('TENDERLY_CHAIN_ID', networkInputs.chainId, networkId);
+            exportWithNetworkId('TENDERLY_FOUNDRY_VERIFICATION_URL', `${testNet.adminRpcUrl}/verify/etherscan`, networkId);
+            core.exportVariable('BUILD_SLUG', buildSlug());
+            const buildOutputFile = `${(0, deployment_info_1.tmpBuildOutDir)()}/${networkInputs.testnetSlug}.json`;
+            exportWithNetworkId("BUILD_OUTPUT_FILE", buildOutputFile, networkId);
+            core.info(`Build output to ${buildOutputFile}`);
+            core.info('Tenderly Virtual TestNet created successfully');
+            core.info(`TestNet ID: ${testNet.id}`);
+            core.info(`TestNet Slug: ${networkInputs.testnetSlug}`);
+            core.info(`Admin RPC URL: ${testNet.adminRpcUrl}`);
+            core.info(`Public RPC URL: ${testNet.publicRpcUrl}`);
+            core.info(`Foundry Verification URL: ${testNet.adminRpcUrl}/verify/etherscan`);
+            return testNet;
+        }));
+        if (mode === 'CD') {
+            await (0, deployment_info_1.setupDeploymentsFolder)();
+        }
+        await (0, deployment_info_1.createInfraDir)();
+        await (0, deployment_info_1.storeInfrastructureInfo)(networkInfos);
+        await (0, tenderly_1.setupTenderlyConfig)(inputs.accessKey);
+    }
+    catch (error) {
+        const err = error;
+        core.setFailed(err.message);
+    }
+}
+run();
+
+
+/***/ }),
+
+/***/ 7450:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.createVirtualTestNet = createVirtualTestNet;
+exports.stopVirtualTestNet = stopVirtualTestNet;
+exports.setupTenderlyConfig = setupTenderlyConfig;
+const core = __importStar(__nccwpck_require__(7484));
+const axios_1 = __importDefault(__nccwpck_require__(7269));
+const path_1 = __importDefault(__nccwpck_require__(6928));
+const os_1 = __importDefault(__nccwpck_require__(857));
+const promises_1 = __importDefault(__nccwpck_require__(1943));
+const API_BASE_URL = 'https://api.tenderly.co/api/v1';
+async function createVirtualTestNet(inputs) {
+    try {
+        core.debug('Creating Virtual TestNet with inputs: ' + JSON.stringify(inputs));
+        const slug = uniqueTestNetSlug(inputs.testnetName);
+        const requestData = {
+            slug,
+            display_name: inputs.testnetName,
+            fork_config: {
+                network_id: parseInt(inputs.networkId),
+                block_number: inputs.blockNumber
+            },
+            virtual_network_config: {
+                chain_config: {
+                    chain_id: parseInt(inputs.chainId.toString())
+                }
+            },
+            sync_state_config: {
+                enabled: inputs.stateSync
+            },
+            explorer_page_config: {
+                enabled: inputs.publicExplorer,
+                verification_visibility: inputs.verificationVisibility
+            }
+        };
+        const response = await axios_1.default.post(`${API_BASE_URL}/account/${inputs.accountName}/project/${inputs.projectName}/vnets`, requestData, {
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-Access-Key': inputs.accessKey
+            }
+        });
+        const { data } = response;
+        if (!data)
+            throw new Error('No data returned from Tenderly API');
+        if (!Array.isArray(data.rpcs))
+            throw new Error(`Invalid RPC data in response: ${JSON.stringify(data)}`);
+        const adminRpc = data.rpcs.find(rpc => rpc.name === 'Admin RPC');
+        const publicRpc = data.rpcs.find(rpc => rpc.name === 'Public RPC');
+        if (!adminRpc || !publicRpc) {
+            throw new Error(`Missing RPC endpoints in response: ${JSON.stringify(data.rpcs)}`);
+        }
+        return {
+            id: data.id,
+            adminRpcUrl: adminRpc.url,
+            publicRpcUrl: publicRpc.url
+        };
+    }
+    catch (error) {
+        if (axios_1.default.isAxiosError(error) && error.response) {
+            core.debug('API Error Response: ' + JSON.stringify(error.response.data));
+            const message = error.response.data?.error?.message || JSON.stringify(error.response.data);
+            throw new Error(`Failed to create TestNet: ${message}`);
+        }
+        throw error;
+    }
+}
+function uniqueTestNetSlug(testnetName) {
+    const timestamp = Math.floor(Date.now() / 1000);
+    return `${testnetName
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '')}-${timestamp}`;
+}
+async function setupTenderlyConfig(accessKey) {
+    try {
+        const configDir = path_1.default.join(os_1.default.homedir(), '.tenderly');
+        const configFile = path_1.default.join(configDir, 'config.yaml');
+        await promises_1.default.mkdir(configDir, { recursive: true });
+        await promises_1.default.writeFile(configFile, `access_key: ${accessKey}`);
+        core.debug('Tenderly config file created successfully');
+    }
+    catch (error) {
+        if (error instanceof Error) {
+            throw new Error(`Failed to create Tenderly config: ${error.message}`);
+        }
+        throw error;
+    }
+}
+async function stopVirtualTestNet(inputs) {
+    try {
+        if (!inputs.testnetId)
+            throw new Error('TestNet ID is required for cleanup');
+        const response = await axios_1.default.patch(`${API_BASE_URL}/account/${inputs.accountName}/project/${inputs.projectName}/vnets/${inputs.testnetId}`, { status: 'stopped' }, {
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-Access-Key': inputs.accessKey
+            }
+        });
+        core.debug('TestNet stopped successfully');
+        return response.data;
+    }
+    catch (error) {
+        if (axios_1.default.isAxiosError(error) && error.response) {
+            core.debug('API Error Response:' + JSON.stringify(error.response.data, null, 2));
+            const message = error.response.data?.error?.message || JSON.stringify(error.response.data);
+            throw new Error(`Failed to stop TestNet: ${message}`);
+        }
+        throw error;
+    }
+}
+
 
 /***/ }),
 
@@ -40265,144 +40563,13 @@ module.exports = /*#__PURE__*/JSON.parse('{"application/1d-interleaved-parityfec
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
 /******/ 	
 /************************************************************************/
-var __webpack_exports__ = {};
-const core = __nccwpck_require__(7484);
-const fs = (__nccwpck_require__(9896).promises);
-const path = __nccwpck_require__(6928);
-const { createVirtualTestNet, setupTenderlyConfig } = __nccwpck_require__(8056);
-const github = __nccwpck_require__(3228);
-
-async function loadCdConfig() {
-  try {
-    const configPath = __nccwpck_require__.ab + "tenderly.config.json";
-    const configData = await fs.readFile(__nccwpck_require__.ab + "tenderly.config.json", 'utf8');
-    return JSON.parse(configData);
-  } catch (error) {
-    core.debug(`No tenderly.config.json found or invalid: ${error.message}`);
-    return null;
-  }
-}
-
-function generateSlug(testnetName) {
-  const baseSlug = `${testnetName}-${github.context.workflow}-${github.context.runId}-${github.context.runNumber}-${github.context.job}`
-    .toLowerCase()           // convert to lowercase
-    .trim()                 // remove leading/trailing spaces
-    .replace(/\s+/g, '-')   // replace spaces with hyphens
-    .replace(/\//g, '-')   // replace spaces with hyphens
-    .replace(/[^a-z0-9-]/g, ''); // remove special characters
-  core.debug(github.context)
-  return baseSlug;
-}
-
-function validateInputs(inputs) {
-  const requiredInputs = {
-    accessKey: { required: true },
-    projectName: { required: true },
-    accountName: { required: true },
-    testnetName: { required: true },
-    networkId: { required: true, isNumeric: true },
-    blockNumber: { required: true },
-    publicExplorer: { required: false, isBoolean: true },
-    verificationVisibility: { required: false, isOneOf: ['bytecode', 'abi', 'src'] }
-  };
-
-  Object.entries(requiredInputs).forEach(([key, rules]) => {
-    const value = inputs[key];
-
-    if (rules.required && (!value || value.trim() === '')) {
-      throw new Error(`Input '${key}' is required`);
-    }
-
-    if (rules.isNumeric && value && isNaN(parseInt(value))) {
-      throw new Error(`Input '${key}' must be a valid number`);
-    }
-
-    if (rules.isBoolean && value && typeof value !== 'boolean') {
-      throw new Error(`Input '${key}' must be a boolean`);
-    }
-
-    if (rules.isOneOf && value && !rules.isOneOf.includes(value)) {
-      throw new Error(`Input '${key}' must be one of: ${rules.isOneOf.join(', ')}`);
-    }
-  });
-
-  core.debug('Input validation passed');
-  return true;
-}
-
-async function run() {
-  try {
-    const mode = core.getInput('mode').toUpperCase();
-    const inputs = {
-      accessKey: core.getInput('access_key', { required: true, trimWhitespace: true }),
-      projectName: core.getInput('project_name', { required: true, trimWhitespace: true }),
-      accountName: core.getInput('account_name', { required: true, trimWhitespace: true }),
-      testnetName: core.getInput('testnet_name', { required: true, trimWhitespace: true }),
-      networkId: core.getInput('network_id', { required: true, trimWhitespace: true }),
-      chainId: core.getInput('chain_id', { trimWhitespace: true }) || core.getInput('network_id', { trimWhitespace: true }),
-      blockNumber: core.getInput('block_number', { required: true, trimWhitespace: true }),
-      stateSync: core.getBooleanInput('state_sync', { trimWhitespace: true }),
-      publicExplorer: core.getBooleanInput('public_explorer', { trimWhitespace: true }),
-      verificationVisibility: core.getInput('verification_visibility', { trimWhitespace: true })
-    };
-
-    if (mode === 'CD') {
-      const config = await loadCdConfig();
-      if (!config) {
-        throw new Error('CD mode requires tenderly.config.json');
-      }
-      
-      // Store deployment info for tracking
-      const deploymentInfo = {
-        testnetId: null,
-        timestamp: new Date().toISOString(),
-        mode: 'CD',
-        environment: inputs.testnetName
-      };
-
-      await fs.writeFile(
-        path.join(process.cwd(), '.tenderly-deployments.json'),
-        JSON.stringify(deploymentInfo, null, 2)
-      );
-    }
-
-    if (!inputs.publicExplorer) {
-      inputs.verificationVisibility = 'bytecode'; // Default to bytecode if public explorer is not enabled
-    }
-
-    // Generate slug from testnet name
-    inputs.testnetSlug = generateSlug(inputs.testnetName);
-    inputs.testnetName = inputs.testnetSlug;
-    core.debug(`Generated testnet slug: ${inputs.testnetSlug}`);
-
-    validateInputs(inputs);
-
-    const testNet = await createVirtualTestNet(inputs);
-
-    core.exportVariable('TENDERLY_TESTNET_ID', testNet.id);
-    core.exportVariable('TENDERLY_ACCOUNT_NAME', inputs.accountName);
-    core.exportVariable('TENDERLY_PROJECT_NAME', inputs.projectName);
-    core.exportVariable('TENDERLY_ADMIN_RPC_URL', testNet.adminRpcUrl);
-    core.exportVariable('TENDERLY_PUBLIC_RPC_URL', testNet.publicRpcUrl);
-    core.exportVariable('TENDERLY_TESTNET_SLUG', inputs.testnetSlug);
-    core.exportVariable('TENDERLY_CHAIN_ID', inputs.chainId);
-    core.exportVariable('TENDERLY_FOUNDRY_VERIFICATION_URL', `${testNet.adminRpcUrl}/verify/etherscan`);
-
-    await setupTenderlyConfig(inputs.accessKey);
-
-    core.info('Tenderly Virtual TestNet created successfully');
-    core.info(`TestNet ID: ${testNet.id}`);
-    core.info(`TestNet Slug: ${inputs.testnetSlug}`);
-    core.info(`Admin RPC URL: ${testNet.adminRpcUrl}`);
-    core.info(`Public RPC URL: ${testNet.publicRpcUrl}`);
-    core.info(`Foundry Verification URL: ${testNet.adminRpcUrl}/verify/etherscan`);
-  } catch (error) {
-    core.setFailed(error.message);
-  }
-}
-
-run();
-module.exports = __webpack_exports__;
+/******/ 	
+/******/ 	// startup
+/******/ 	// Load entry module and return exports
+/******/ 	// This entry module is referenced by other modules so it can't be inlined
+/******/ 	var __webpack_exports__ = __nccwpck_require__(9407);
+/******/ 	module.exports = __webpack_exports__;
+/******/ 	
 /******/ })()
 ;
 //# sourceMappingURL=index.js.map

@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "deploy:vnet": "yes | npx hardhat ignition deploy ./ignition/modules/Counter.ts --network tenderly_ci --deployment-id deploy",
-    "test:vnet": "hardhat test --network tenderly_ci"
+    "deploy:1": "yes | npx hardhat ignition deploy ./ignition/modules/CounterMainnet.ts --network tenderly_1",
+    "deploy:137": "yes | npx hardhat ignition deploy ./ignition/modules/CounterPolygon.ts --network tenderly_137",
+    "test:1": "hardhat test --network tenderly_1"
   },
   "keywords": [],
   "author": "",

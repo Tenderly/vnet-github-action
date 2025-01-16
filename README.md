@@ -3,29 +3,40 @@
 [![GitHub release](https://img.shields.io/github/release/Tenderly/vnet-github-action.svg?style=flat-square)](https://github.com/Tenderly/vnet-github-action/releases/latest)
 [![GitHub marketplace](https://img.shields.io/badge/marketplace-tenderly--virtual--testnet-blue?logo=github&style=flat-square)](https://github.com/marketplace/actions/tenderly-virtual-testnet-setup)
 
-The `Tenderly/vnet-github-action` automates provisioning of [Virtual TestNets](https://docs.tenderly.co/virtual-testnets) for smart contract CI/CD pipelines. Virtual TestNets are testing and staging infrastructure with built [Mainnet State Sync](https://docs.tenderly.co/virtual-testnets/state-sync), [Unlimited Faucet](https://docs.tenderly.co/virtual-testnets/unlimited-faucet), [Debugger](https://docs.tenderly.co/debugger), and [Public Block Explorer](https://docs.tenderly.co/virtual-testnets/testnet-explorer)
+The `Tenderly/vnet-github-action` automates provisioning of multiple parallel [Virtual TestNets](https://docs.tenderly.co/virtual-testnets) for smart contract CI/CD pipelines. You can fork multiple networks simultaneously (e.g., Ethereum, Polygon, Arbitrum), with each Virtual TestNet providing:
 
-This action creates a new Virtual TestNet from your configuration and exposes its RPC URLs through environment variables, enabling automated testing and staging environments for your protocols.
+- [State Sync with mainnet](https://docs.tenderly.co/virtual-testnets/state-sync)
+- [Unlimited Faucet](https://docs.tenderly.co/virtual-testnets/unlimited-faucet)
+- [Debugger](https://docs.tenderly.co/debugger)
+- [Public Block Explorer](https://docs.tenderly.co/virtual-testnets/testnet-explorer)
 
-This action enables:
+## Features
 
-- **Continuous Integration with Hardhat**: Run your Hardhat tests against a forked network and use Tenderly debugger and Simulator to fix issues
-- **Protocol Staging with Hardhat and Foundry**: Deploy and stage your protocols in an isolated, mainnet-like environment
-- **Contract Staging with Hardhat and Foundry**: Use dedicated Virtual TestNets as staging environments for contract development
+- **Multi-Network Testing**: Fork multiple networks in parallel with unique chain IDs
+- **Automated Deployments**: Deploy and verify contracts with complete deployment logs
+- **CI/CD Integration**: Run tests against forked networks and maintain staging environments
+- **Artifact Collection**: Track deployments across networks with structured logs
+
+## Operating Modes
+
+The action supports two modes:
+
+- **CI Mode**: Creates ephemeral Virtual TestNets that are cleaned up after testing. No artifacts or build info files are persisted nor pushed after the run.
+- **CD Mode**: 
+  - Creates persistent Virtual TestNets for staging environments
+  - Collects deployment artifacts in the `.tenderly/` directory
+  - Optionally commits and pushes artifacts to your repository (controlled by parameter `push_on_complete`)
 
 ## Quick Start
 
-This example shows how to fork Ethereum mainnet with a custom chain ID, enable the Public Block Explorer, and keep the testnet state in sync with mainnet.
+### 1. Prerequisites
 
-After the step `Setup Virtual TestNet` you can access the RPC URL from `TENDERLY_TESTNET_ID`, `TENDERLY_ADMIN_RPC_URL`, and `TENDERLY_FOUNDRY_VERIFICATION_URL`.
+1. Get your [Tenderly access key](https://docs.tenderly.co/account/projects/how-to-generate-api-access-token) and store it in GitHub Action Secrets as `TENDERLY_ACCESS_KEY`
+2. Set up your [project name and account name](https://docs.tenderly.co/account/projects/account-project-slug) in GitHub Action variables as `TENDERLY_PROJECT_NAME` and `TENDERLY_ACCOUNT_NAME`
 
-### Step 1: Get Access key and project name
+### 2. Basic Configuration
 
-1. Get your [Tenderly access key](https://docs.tenderly.co/account/projects/how-to-generate-api-access-token) and place it in Github Action Secrets under **`TENDERLY_ACCESS_KEY`**.
-2. Place the [project name and account name](https://docs.tenderly.co/account/projects/account-project-slug) in Github Action environment variables under **`TENDERLY_PROJECT_NAME`** and **`TENDERLY_ACCOUNT_NAME`** respectively.
-3. Create the file `.github/workflows/ci.yaml` and use the starter action configuration below.
-4. Commit, push, and check your action execution.
-
+Create `.github/workflows/ci.yaml`:
 
 ```yaml
 name: Smart Contract CI
@@ -45,265 +56,114 @@ jobs:
           project_name: ${{ vars.TENDERLY_PROJECT_NAME }}
           account_name: ${{ vars.TENDERLY_ACCOUNT_NAME }}
           testnet_name: 'CI Test Network'
-          network_id: 1
-          chain_id: 73571  # Recommended: prefix with 7357 for unique identification to avoid transaction replay attacks
-          public_explorer: true 
-          verification_visibility: 'src'  # Options: 'abi', 'src', 'bytecode'
-          state_sync: true 
-```
-
-## Inputs
-
-| Name                         | Required | Default              | Description                                                                                  |
-| ---------------------------- | -------- | -------------------- |----------------------------------------------------------------------------------------------|
-| `access_key`                 | Yes      | -                    | Tenderly API Access Key                                                                      |
-| `project_name`               | Yes      | -                    | Tenderly Project Name                                                                        |
-| `account_name`               | Yes      | -                    | Tenderly Account Name                                                                        |
-| `testnet_name`               | No       | 'CI Virtual TestNet' | Display name for the Virtual TestNet                                                         |
-| `network_id`                 | Yes      | 1                    | Network ID to fork (e.g., 1 for Ethereum mainnet) - integer                                  |
-| `chain_id`                   | No       | -                    | Custom chain ID for Virtual TestNet (Recommended: prefix with 7357) - integer                |
-| `block_number`               | No       | 'latest'             | Block number to fork from (must be a hex string, e.g., '0x1234567')                          |
-| `public_explorer`            | No       | false                | Enable block explorer for the Virtual TestNet                                                |
-| `verification_visibility`    | No       | 'bytecode'           | Contract verification type ('abi', 'src', or 'bytecode')                                     |
-| `state_sync`                 | No       | false                | Enable state synchronization with forked network                                             |
-| `mode`                       | No       | 'CI'                 | Action mode ('CI' or 'CD') - CI cleans up after completion, CD preserves the Virtual TestNet |
-
-## Outputs
-
-The action exports several environment variables:
-
-| Variable                            | Description                                |
-| ----------------------------------- | ------------------------------------------ |
-| `TENDERLY_TESTNET_ID`               | The ID of the created Virtual TestNet      |
-| `TENDERLY_ADMIN_RPC_URL`            | Admin RPC endpoint URL                     |
-| `TENDERLY_PUBLIC_RPC_URL`           | Public RPC endpoint URL                    |
-| `TENDERLY_FOUNDRY_VERIFICATION_URL` | URL for Foundry contract verification      |
-| `TENDERLY_EXPLORER_URL`             | Block explorer URL for the Virtual TestNet |
-
-## Integration Examples
-
-The following examples demonstrate how to integrate Tenderly Virtual TestNet into your CI/CD pipeline using popular development frameworks. Each example includes both testing and staging deployment stages, with tests running on ephemeral environments and deployments targeting a persistent staging testnet.
-
-### Hardhat Pipeline
-
-This sample configuration will:
-- `test` contracts by deploying them and sending test transactions to an ephemeral Virtual TestNet
-- `deploy` contracts to the staging Virtual TestNet
-
-1. Set up your github action using the following starter yaml:
-
-```yaml
-name: Hardhat Pipeline
-on: [push, pull_request]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-      
-      - name: Setup Virtual TestNet
-        uses: Tenderly/vnet-github-action@v1.0.x
-        with:
-          access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
-          project_name: ${{ vars.TENDERLY_PROJECT_NAME }}
-          account_name: ${{ vars.TENDERLY_ACCOUNT_NAME }}
-          network_id: 1
-          chain_id: 73571
+          network_id: |
+            1
+            137
+          chain_id_prefix: 7357  # Results in chain IDs 73571, 7357137
           public_explorer: true
-      
-      - name: Install dependencies
-        run: npm install
-      
-      - name: Run Tests
-        run: npx hardhat test --network tenderly_ci
-
-  deploy:
-    needs: test
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Virtual TestNet
-        uses: Tenderly/vnet-github-action@v1.0.x
-        with:
-          access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
-          project_name: ${{ vars.TENDERLY_PROJECT_NAME }}
-          account_name: ${{ vars.TENDERLY_ACCOUNT_NAME }}
-          network_id: 1
-          chain_id: 73571
-          public_explorer: true
-          
-      - name: Deploy Contracts
-        run: npx hardhat run scripts/deploy.js --network tenderly_ci
+          verification_visibility: 'src'
+          state_sync: true
+          push_on_complete: true
 ```
 
-1. Extend your `hardhat.config.js` by adding the following configuration, using the `TENDERLY_ADMIN_RPC_URL` and `TENDERLY_CHAIN_ID`:
-   
-```javascript
-{
-  networks: {
-   tenderly_ci: {
-     url: process.env.TENDERLY_ADMIN_RPC_URL,
-     chainId: parseInt(process.env.TENDERLY_CHAIN_ID)
-   }
- },
- tenderly: {
-   project: process.env.TENDERLY_PROJECT_NAME,
-   username: process.env.TENDERLY_ACCOUNT_NAME,
-   accessKey: process.env.TENDERLY_ACCESS_KEY
- }
-}
-```
+## Examples
+Explore [hardhat-ignition](examples/hardhat-ignition/README.md) and [foundry](examples/foundry/README.md) CI setup in more detail.
+For more details, explore the [CI with hardhat](https://docs.tenderly.co/virtual-testnets/ci-cd/github-actions-hardhat) and [CI with Foundry](https://docs.tenderly.co/virtual-testnets/ci-cd/github-actions-foundry) guides.
 
-### Foundry Pipeline
+## Configuration Options
 
-This pipeline runs tests and deploys verified contracts to a Virtual TestNet. Virtual TestNets provide a persistent environment, making them ideal for staging and integration testing.
+### Required Inputs
 
-```yaml
-name: Foundry Pipeline
-on: [push, pull_request]
+| Name              | Description                                                                                                                      |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `access_key`      | Tenderly [API Access Key](https://docs.tenderly.co/account/projects/how-to-generate-api-access-token)                            |
+| `project_name`    | Tenderly [Project Name](https://docs.tenderly.co/account/projects/account-project-slug)                                          |
+| `account_name`    | Tenderly [Account Name](https://docs.tenderly.co/account/projects/account-project-slug)                                          |
+| `testnet_name`    | Display name for the Virtual TestNet                                                                                             |
+| `network_id`      | Network IDs to fork ([multiline input](.github/workflows/foundry-ci-cd-multi.yml#L32))                                           |
+| `block_number`    | Block number to fork from                                                                                                        |
+| `chain_id_prefix` | Prefix for generating [unique chain IDs](https://docs.tenderly.co/virtual-testnets/faq#unique-chain-id). Use `""` for no prefix. |
 
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-      
-      - name: Build and Test
-        run: |
-          forge build
-          forge test -vvv
+### Optional Inputs
 
-  deploy:
-    needs: test
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Virtual TestNet
-        uses: Tenderly/vnet-github-action@v1.0.x
-        with:
-          access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
-          project_name: ${{ vars.TENDERLY_PROJECT_NAME }}
-          account_name: ${{ vars.TENDERLY_ACCOUNT_NAME }}
-          network_id: 1
-          chain_id: 73571
-          public_explorer: true
+| Name                      | Default      | Description                                                                                                                                                              |
+| ------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `public_explorer`         | `false`      | Enable block explorer                                                                                                                                                    |
+| `verification_visibility` | `'bytecode'` | Contract [verification visbility](https://docs.tenderly.co/virtual-testnets/testnet-explorer#contract-visibility-in-public-explorer) (`'abi'`, `'src'`, or `'bytecode'`) |
+| `state_sync`              | `false`      | Enable State Sync                                                                                                                                                        |
+| `mode`                    | `'CI'`       | Action mode (`'CI'` or `'CD'`)                                                                                                                                           |
+| `push_on_complete`        | `false`      | Push deployment artifacts in CD mode                                                                                                                                     |
 
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-      
-      - name: Foundry Build
-        run: |
-          forge --version
-          forge build --sizes
-          
-      - name: Deploy Contracts
-        env:
-          FOUNDRY_ETH_RPC_URL: ${{ env.TENDERLY_PUBLIC_RPC_URL }}
-          FOUNDRY_VERIFIER_URL: ${{ env.TENDERLY_FOUNDRY_VERIFICATION_URL }}
-        run: |
-          forge script script/Deploy.s.sol \
-            --rpc-url $FOUNDRY_ETH_RPC_URL \
-            --verifier-url $FOUNDRY_VERIFIER_URL \
-            --slow \
-            --broadcast \
-            --verify
-```
+## Environment Variables
 
-## Additional notes on Foundry Pipeline
+### Network-Specific Variables
 
-If you'd like to use specific address for the deployment and verification of contracts on Virtual TestNets you can do so by following these steps:
+After forking each specified network, the following variables are exported (replace `{network_id}` with actual network ID):
 
-1. Add your private key to GitHub Secrets (through UI or CLI)
-2. Update your workflow to include wallet funding and deployment:
+| Variable                                         | Description              |
+| ------------------------------------------------ | ------------------------ |
+| `TENDERLY_TESTNET_ID_{network_id}`               | Virtual TestNet ID       |
+| `TENDERLY_ADMIN_RPC_URL_{network_id}`            | Admin RPC endpoint       |
+| `TENDERLY_PUBLIC_RPC_URL_{network_id}`           | Public RPC endpoint      |
+| `TENDERLY_CHAIN_ID_{network_id}`                 | Chain ID                 |
+| `TENDERLY_TESTNET_SLUG_{network_id}`             | Unique TestNet slug      |
+| `TENDERLY_FOUNDRY_VERIFICATION_URL_{network_id}` | Foundry verification URL |
+| `BUILD_OUTPUT_FILE_{network_id}`                 | Build output file path   |
 
-```yaml
-      - name: Fund Wallet
-        run: |
-          curl --location ${{ env.TENDERLY_ADMIN_RPC_URL }} \
-          --header 'Content-Type: application/json' \
-          --data '{
-            "jsonrpc": "2.0",
-            "method": "tenderly_setBalance",
-            "params": ["${{ secrets.WALLET_ADDRESS }}", "0xDE0B6B3A7640000"],
-            "id": "1234"
-          }'
+### Global Variables
 
-      - name: Deploy Contracts
-        env:
-          FOUNDRY_ETH_RPC_URL: ${{ env.TENDERLY_PUBLIC_RPC_URL }}
-          FOUNDRY_VERIFIER_URL: ${{ env.TENDERLY_FOUNDRY_VERIFICATION_URL }}
-          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-          TENDERLY_ACCESS_TOKEN: ${{ secrets.TENDERLY_ACCESS_KEY }}
-        run: |
-          forge script script/Deploy.s.sol \
-            --private-key $PRIVATE_KEY \
-            --rpc-url $FOUNDRY_ETH_RPC_URL \
-            --verifier-url $FOUNDRY_VERIFIER_URL \
-            --etherscan-api-key $TENDERLY_ACCESS_TOKEN \
-            --slow \
-            --broadcast \
-            --verify
-```
+| Variable                | Description                                                                               |
+| ----------------------- | ----------------------------------------------------------------------------------------- |
+| `TENDERLY_ACCOUNT_NAME` | Tenderly account name                                                                     |
+| `TENDERLY_PROJECT_NAME` | Tenderly project name                                                                     |
+| `TENDERLY_ACCESS_KEY`   | Tenderly access key                                                                       |
+| `BUILD_SLUG`            | Unique slug for the current run of the Github Action, consisting of run number and run ID |
 
-## Advanced Configuration
+## Deployment Artifacts
 
-Advanced configuration examples demonstrate how to extend the basic Virtual TestNet setup for more complex scenarios, such as multi-network testing and custom chain configurations.
+### Infrastructure Tracking
 
-### Multi-Network Testing
-Use matrix strategy to test your contracts across multiple networks in parallel. This is particularly useful for protocols that deploy across multiple chains and need to ensure consistent behavior.
+After each Virtual TestNet creation, the `.tenderly/infra` directory will hold JSON files with access information to those TestNets. The action will push this directory to your repository for `CD`-mode, if `push_on_complete` is `true`.
 
-```yaml
-jobs:
-  test:
-    strategy:
-      matrix:
-        network: ['1', '137', '42161']  # Ethereum, Polygon, Arbitrum
-    steps:
-      - uses: Tenderly/vnet-github-action@v1.0.x
-        with:
-          network_id: ${{ matrix.network }}
-          chain_id: ${{ format('7357{0}', matrix.network) }}
-```
+### Foundry Deployment Artifacts
 
-## Debugging
+In CD mode, the action generates and pushes the following artifacts in the `.tenderly/` directory:
+
+- `infra/{job-identifier}.json`: Infrastructure information
+- `tmp/{testnet-slug}.json`: Raw build output
+- `deployed-{testnet-slug}.json`: Structured deployment information
+
+### Hardhat Ignition Artifacts
+
+Hardhat ignition artifacts are present in the `ignition/deployments` directory and will be pushed to the main repository.
+
+## Advanced Usage
+
+### Debug Logging
 
 Enable debug logs by setting:
+
 ```yaml
 env:
   DEBUG: '@tenderly/github-action'
 ```
 
-## Notes
+### GitHub Environment Setup
 
-* Virtual TestNets are automatically cleaned up after the workflow completes
-* Use matrix builds for testing across multiple networks
-* Contract verification works automatically. Follow the guides for verification with [Hardhat](https://docs.tenderly.co/contract-verification/hardhat) and [Foundry](https://docs.tenderly.co/contract-verification/foundry).
-* Use unique chain IDs when possible (e.g. by prefixing with `7357`) to avoid transaction replay attacks.
-* If you don't want to use Github UI to add required variables, you can do the following with utilizing Github CLI. Commands that enable you do it are:
+Use GitHub CLI to set up required variables and secrets:
+
 ```bash
-TENDERLY_PROJECT_NAME=...
-TENDERLY_ACCOUNT_NAME=...
-TENDERLY_ACCESS_KEY=...
-gh variable set TENDERLY_PROJECT_NAME --body ${TENDERLY_PROJECT_NAME}
-gh variable set TENDERLY_ACCOUNT_NAME --body ${TENDERLY_ACCOUNT_NAME}
-gh secret set TENDERLY_ACCESS_KEY --body ${TENDERLY_ACCESS_KEY}
+gh variable set TENDERLY_PROJECT_NAME --body "${TENDERLY_PROJECT_NAME}"
+gh variable set TENDERLY_ACCOUNT_NAME --body "${TENDERLY_ACCOUNT_NAME}"
+gh secret set TENDERLY_ACCESS_KEY --body "${TENDERLY_ACCESS_KEY}"
 ```
+
+## Best Practices
+
+1. Use unique chain IDs (e.g., with `chain_id_prefix`) to prevent transaction replay attacks
+2. Enable `public_explorer` and set `verification_visibility` to `'src'` for better debugging
+3. In CD mode, use `push_on_complete` to maintain deployment history
+4. Structure your workflow to use CI mode for tests and CD mode for staging environments
 
 ## License
 

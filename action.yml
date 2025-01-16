@@ -19,12 +19,15 @@ inputs:
     required: true
     default: 'CI Virtual TestNet'
   network_id:
-    description: 'Network ID to fork (e.g., 1 for Ethereum mainnet, 137 for Polygon)'
+    description: 'Array of Network IDs to fork (e.g., 1 for Ethereum Mainnet, 137 for Polygon)'
     required: true
-    default: '1'
   chain_id:
+    description: 'Chain ID for Virtual TestNet. If not specified will be formed as ${chain_id_prefix}${network_id}'
+    required: false
+  chain_id_prefix:
     description: 'Chain ID for Virtual TestNet'
     required: false
+    default: 7357
   block_number:
     description: 'Block number to fork from (in hex or "latest")'
     required: true
@@ -41,7 +44,10 @@ inputs:
     description: 'If Public Explorer is enabled, level of visibility for smart contracts deployed on your TestNet'
     required: false
     default: 'bytecode'
-
+  push_on_complete:
+    description: 'Push deployment files in ci-cd-out on action completion to track deployed smart contracts'
+    required: false
+    default: 'true'
 runs:
   using: 'node20'
   main: './dist/index.js'
