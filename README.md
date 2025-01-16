@@ -155,7 +155,10 @@ Use GitHub CLI to set up required variables and secrets:
 ```bash
 gh variable set TENDERLY_PROJECT_NAME --body "${TENDERLY_PROJECT_NAME}"
 gh variable set TENDERLY_ACCOUNT_NAME --body "${TENDERLY_ACCOUNT_NAME}"
+gh variable set DEPLOYER_WALLET_ADDRESS --body "${TENDERLY_PROJECT_NAME}"
+
 gh secret set TENDERLY_ACCESS_KEY --body "${TENDERLY_ACCESS_KEY}"
+gh secret set DEPLOYER_PRIVATE_KEY --body "${TENDERLY_PROJECT_NAME}"
 ```
 
 ## Best Practices

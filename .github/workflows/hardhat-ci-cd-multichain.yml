@@ -6,7 +6,7 @@ env:
   TENDERLY_PROJECT_NAME: ${{ vars.TENDERLY_PROJECT_NAME }}
   TENDERLY_ACCOUNT_NAME: ${{ vars.TENDERLY_ACCOUNT_NAME }}
 jobs:
- test:
+  test:
    runs-on: ubuntu-latest
    steps:
      - uses: actions/checkout@v4
