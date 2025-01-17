@@ -95,6 +95,7 @@ async function push(): Promise<void> {
   await exec.exec('git', ['remote', 'set-url', 'origin',
     `https://x-access-token:${token}@${repo.replace('https://', '')}`]);
   await exec.exec('git', ['add', '.']);
+  await exec.exec('git', ['checkout', '--', '**/foundry.toml']);
   await exec.exec('git', ['commit', '-m',
     `[skip actions] GitHub Action ${github.context.workflow} Deployed contracts\n\n${await testnetLinks()}`]);
   await exec.exec('git', ['reset', '--hard', 'HEAD']);

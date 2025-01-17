@@ -7,7 +7,7 @@ on:
 env:
   TENDERLY_ACCESS_KEY: ${{ secrets.TENDERLY_ACCESS_KEY }}
   DEPLOYER_WALLET_ADDRESS: ${{ vars.DEPLOYER_WALLET_ADDRESS }}
-  DEBUG: ./
+  DEBUG: tenderly/vnet-github-action@v1.0.12
 jobs:
   deploy:
     runs-on: ubuntu-latest
