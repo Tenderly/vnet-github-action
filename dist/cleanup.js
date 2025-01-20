@@ -33479,10 +33479,12 @@ async function cleanup() {
         }
         if (mode === 'CD') {
             core.info('Running in CD mode - skipping TestNet cleanup');
-            const deploymentLogs = await (0, foundry_logs_1.parseDeploymentLogs)((0, deployment_info_1.tmpBuildOutDir)());
-            await fs_1.promises.writeFile(`${(0, deployment_info_1.buildOutDir)()}/${(0, deployment_info_1.currentJobFileBasename)()}-deployments.json`, JSON.stringify(deploymentLogs), 'utf-8');
+            const deploymentInfo = await (0, foundry_logs_1.parseDeploymentLogs)((0, deployment_info_1.tmpBuildOutDir)());
+            // remove tmp out dir after parsing - no need for that anymore
+            fs_1.promises.rm((0, deployment_info_1.tmpBuildOutDir)(), { recursive: true });
+            await persistDeployment(deploymentInfo);
             await push();
-            core.info("Keeping containers on in CD mode");
+            core.info("Keeping containers ON in CD mode");
             return;
         }
         const baseInputs = {
@@ -33539,6 +33541,9 @@ async function testnetLinks() {
     }).join("\n");
 }
 cleanup();
+async function persistDeployment(deploymentLogs) {
+    await fs_1.promises.writeFile(`${(0, deployment_info_1.buildOutDir)()}/${(0, deployment_info_1.currentJobFileBasename)()}-deployments.json`, JSON.stringify(deploymentLogs, null, 2), 'utf-8');
+}
 
 
 /***/ }),
@@ -33735,8 +33740,15 @@ function extractRunNumber(filename) {
     }
     return parseInt(match[1], 10);
 }
-async function parseDeploymentLogs(dirPath) {
-    const files = await fs_1.promises.readdir(dirPath);
+/**
+ * Parses foundry deployment logs (output from `--json` flag) and returns the parsed data.
+ *
+ * Note: [Foundry docs](https://book.getfoundry.sh/reference/forge/forge-script) states the output is under development and prone to change.
+ * @param tmpDirPath logs dir path
+ * @returns parsed deployment logs
+ */
+async function parseDeploymentLogs(tmpDirPath) {
+    const files = await fs_1.promises.readdir(tmpDirPath);
     const jsonFiles = files.filter(file => path_1.default.extname(file) === '.json');
     const workflowInfo = {
         runNumber: github.context.runNumber,
@@ -33750,7 +33762,7 @@ async function parseDeploymentLogs(dirPath) {
         throw new Error('No infrastructure information found');
     }
     for (const file of jsonFiles) {
-        const filePath = path_1.default.join(dirPath, file);
+        const filePath = path_1.default.join(tmpDirPath, file);
         const content = await fs_1.promises.readFile(filePath, 'utf8');
         const lines = content.split('\n');
         let currentContract = {};
@@ -33944,6 +33956,11 @@ async function setupTenderlyConfig(accessKey) {
         throw error;
     }
 }
+/**
+ * Pauses virtual TestNet execution, but keeps data intact.
+ * @param inputs API access inputs
+ * @returns
+ */
 async function stopVirtualTestNet(inputs) {
     try {
         if (!inputs.testnetId)

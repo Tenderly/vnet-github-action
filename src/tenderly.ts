@@ -118,6 +118,11 @@ interface StopTestNetInputs {
   accessKey: string;
 }
 
+/**
+ * Pauses virtual TestNet execution, but keeps data intact.
+ * @param inputs API access inputs
+ * @returns 
+ */
 async function stopVirtualTestNet(inputs: StopTestNetInputs): Promise<any> {
   try {
     if (!inputs.testnetId) throw new Error('TestNet ID is required for cleanup');
