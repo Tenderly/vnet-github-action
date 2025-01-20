@@ -1,0 +1,9 @@
+{
+  "workflow": {
+    "runNumber": 12,
+    "workflow": "Hardhat CI/CD Multichain",
+    "job": "deploy",
+    "runId": 12872646869
+  },
+  "deployments": []
+}
