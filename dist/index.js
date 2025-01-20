@@ -33884,6 +33884,11 @@ async function setupTenderlyConfig(accessKey) {
         throw error;
     }
 }
+/**
+ * Pauses virtual TestNet execution, but keeps data intact.
+ * @param inputs API access inputs
+ * @returns
+ */
 async function stopVirtualTestNet(inputs) {
     try {
         if (!inputs.testnetId)

@@ -48,8 +48,15 @@ function extractRunNumber(filename: string): number {
   return parseInt(match[1], 10);
 }
 
-async function parseDeploymentLogs(dirPath: string): Promise<ParsedDeployments> {
-  const files = await fs.readdir(dirPath);
+/**
+ * Parses foundry deployment logs (output from `--json` flag) and returns the parsed data. 
+ * 
+ * Note: [Foundry docs](https://book.getfoundry.sh/reference/forge/forge-script) states the output is under development and prone to change.
+ * @param tmpDirPath logs dir path
+ * @returns parsed deployment logs
+ */
+async function parseDeploymentLogs(tmpDirPath: string): Promise<ParsedDeployments> {
+  const files = await fs.readdir(tmpDirPath);
   const jsonFiles = files.filter(file => path.extname(file) === '.json');
   
   const workflowInfo: WorkflowInfo = {
@@ -67,7 +74,7 @@ async function parseDeploymentLogs(dirPath: string): Promise<ParsedDeployments> 
   }
 
   for (const file of jsonFiles) {
-    const filePath = path.join(dirPath, file);
+    const filePath = path.join(tmpDirPath, file);
     const content = await fs.readFile(filePath, 'utf8');
     const lines = content.split('\n');
 

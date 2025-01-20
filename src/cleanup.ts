@@ -5,7 +5,7 @@ import { promises as fs, writeFile, writeFileSync } from 'fs';
 import path from 'path';
 import { buildOutDir, currentJobFileBasename, readInfraForCurrentJob, tmpBuildOutDir } from './deployment-info';
 import { stopVirtualTestNet } from './tenderly';
-import { parseDeploymentLogs } from './foundry-logs';
+import { ParsedDeployments, parseDeploymentLogs } from './foundry-logs';
 
 interface DeploymentVerification {
   status: string | null;
@@ -47,10 +47,13 @@ async function cleanup(): Promise<void> {
 
     if (mode === 'CD') {
       core.info('Running in CD mode - skipping TestNet cleanup');
-      const deploymentLogs = await parseDeploymentLogs(tmpBuildOutDir());
-      await fs.writeFile(`${buildOutDir()}/${currentJobFileBasename()}-deployments.json`, JSON.stringify(deploymentLogs), 'utf-8');
+      const deploymentInfo = await parseDeploymentLogs(tmpBuildOutDir());
+
+      // remove tmp out dir after parsing - no need for that anymore
+      fs.rm(tmpBuildOutDir(), { recursive: true });
+      await persistDeployment(deploymentInfo);
       await push();
-      core.info("Keeping containers on in CD mode");
+      core.info("Keeping containers ON in CD mode");
       return; 
     }
 
@@ -119,3 +122,7 @@ async function testnetLinks() {
 }
 
 cleanup();
+
+async function persistDeployment(deploymentLogs: ParsedDeployments) {
+  await fs.writeFile(`${buildOutDir()}/${currentJobFileBasename()}-deployments.json`, JSON.stringify(deploymentLogs, null, 2), 'utf-8');
+}
