@@ -33599,9 +33599,19 @@ const core = __importStar(__nccwpck_require__(7484));
 const github = __importStar(__nccwpck_require__(3228));
 const tenderly_1 = __nccwpck_require__(7450);
 const deployment_info_1 = __nccwpck_require__(7905);
+/**
+ * Provides a unique build slug for the current run.
+ * @returns Build slug
+ */
 function buildSlug() {
     return `${github.context.runNumber}-${github.context.runId}`;
 }
+/**
+ * Generates a unique slug for the testnet, related to the current run and target network.
+ * @param testnetName testnet name
+ * @param networkId network id
+ * @returns unique slug
+ */
 function generateSlug(testnetName, networkId) {
     return `${github.context.runNumber}-${testnetName}-net-${networkId}-${github.context.workflow}-${github.context.job}-${github.context.runId}`
         .toLowerCase()
@@ -33639,8 +33649,28 @@ function validateInputs(inputs) {
     core.debug('Input validation passed');
     return true;
 }
+/**
+ * Exports the value as an environment variable (redacted in logs) with the given key.
+ * See {@link exportSecretlyWithNetworkId} for exporting secrets.
+ *
+ * @param key Variable key
+ * @param value Value
+ * @param networkId Network ID to export the secret to
+ */
 function exportWithNetworkId(key, value, networkId) {
     core.exportVariable(`${key}_${networkId}`, value);
+}
+/**
+ * Exports the value as a secret environment variable (redacted in logs) with the given key.
+ * See {@link exportWithNetworkId} for exporting non-secret values.
+ *
+ * @param key Variable key
+ * @param value Value
+ * @param networkId Network ID to export the secret to
+ */
+function exportSecretlyWithNetworkId(key, value, networkId) {
+    core.setSecret(value.toString());
+    exportWithNetworkId(key, value, networkId);
 }
 async function run() {
     try {
@@ -33665,7 +33695,7 @@ async function run() {
             inputs.verificationVisibility = 'bytecode';
         }
         const networkIds = core.getMultilineInput("network_id");
-        const networkInfos = {};
+        const networkInfo = {};
         await Promise.all(networkIds.map(async (networkId) => {
             const networkInputs = {
                 ...inputs,
@@ -33677,22 +33707,23 @@ async function run() {
             validateInputs(networkInputs);
             const testNet = await (0, tenderly_1.createVirtualTestNet)(networkInputs);
             // Store network info
-            networkInfos[networkId] = {
+            networkInfo[networkId] = {
                 ...testNet,
                 networkId,
                 chainId: networkInputs.chainId,
                 testnetSlug: networkInputs.testnetSlug || '',
                 explorerUrl: inputs.publicExplorer ? `https://dashboard.tenderly.co/${inputs.accountName}/${inputs.projectName}/testnet/${testNet.id}` : undefined
             };
+            // export relevant network variables
             exportWithNetworkId('TENDERLY_TESTNET_ID', testNet.id, networkId);
-            exportWithNetworkId('TENDERLY_ADMIN_RPC_URL', testNet.adminRpcUrl, networkId);
+            exportSecretlyWithNetworkId('TENDERLY_ADMIN_RPC_URL', testNet.adminRpcUrl, networkId);
             exportWithNetworkId('TENDERLY_PUBLIC_RPC_URL', testNet.publicRpcUrl, networkId);
             exportWithNetworkId('TENDERLY_TESTNET_SLUG', networkInputs.testnetSlug || '', networkId);
             exportWithNetworkId('TENDERLY_CHAIN_ID', networkInputs.chainId, networkId);
             exportWithNetworkId('TENDERLY_FOUNDRY_VERIFICATION_URL', `${testNet.adminRpcUrl}/verify/etherscan`, networkId);
-            core.exportVariable('BUILD_SLUG', buildSlug());
             const buildOutputFile = `${(0, deployment_info_1.tmpBuildOutDir)()}/${networkInputs.testnetSlug}.json`;
             exportWithNetworkId("BUILD_OUTPUT_FILE", buildOutputFile, networkId);
+            core.exportVariable('BUILD_SLUG', buildSlug());
             core.info(`Build output to ${buildOutputFile}`);
             core.info('Tenderly Virtual TestNet created successfully');
             core.info(`TestNet ID: ${testNet.id}`);
@@ -33706,7 +33737,7 @@ async function run() {
             await (0, deployment_info_1.setupDeploymentsFolder)();
         }
         await (0, deployment_info_1.createInfraDir)();
-        await (0, deployment_info_1.storeInfrastructureInfo)(networkInfos);
+        await (0, deployment_info_1.storeInfrastructureInfo)(networkInfo);
         await (0, tenderly_1.setupTenderlyConfig)(inputs.accessKey);
     }
     catch (error) {

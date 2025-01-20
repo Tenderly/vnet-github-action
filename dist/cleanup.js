@@ -33473,6 +33473,7 @@ const deployment_info_1 = __nccwpck_require__(7905);
 const tenderly_1 = __nccwpck_require__(7450);
 async function cleanup() {
     try {
+        clearSensitiveData();
         const mode = core.getInput('mode').toUpperCase();
         const infra = await (0, deployment_info_1.readInfraForCurrentJob)();
         if (!infra) {
@@ -33512,6 +33513,9 @@ async function cleanup() {
         const err = error;
         core.warning(`Failed to stop Virtual TestNet: ${err.message}`);
     }
+}
+async function clearSensitiveData() {
+    return await exec.exec('git', ['checkout', '--', '**/foundry.toml']);
 }
 async function push() {
     const pushOnComplete = core.getBooleanInput('push_on_complete');
