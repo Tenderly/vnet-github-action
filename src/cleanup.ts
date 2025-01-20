@@ -35,7 +35,7 @@ interface ProcessingResult {
 
 async function cleanup(): Promise<void> {
   try {
-
+    clearSensitiveData();
     const mode = core.getInput('mode').toUpperCase();
 
     const infra = await readInfraForCurrentJob();
@@ -82,6 +82,10 @@ async function cleanup(): Promise<void> {
   }
 }
 
+async function clearSensitiveData() {
+  return await exec.exec('git', ['checkout', '--', '**/foundry.toml']);
+}
+
 async function push(): Promise<void> {
   const pushOnComplete = core.getBooleanInput('push_on_complete');
   if (!pushOnComplete) return;
@@ -95,7 +99,6 @@ async function push(): Promise<void> {
   await exec.exec('git', ['remote', 'set-url', 'origin',
     `https://x-access-token:${token}@${repo.replace('https://', '')}`]);
   await exec.exec('git', ['add', '.']);
-  await exec.exec('git', ['checkout', '--', '**/foundry.toml']);
   await exec.exec('git', ['commit', '-m',
     `[skip actions] GitHub Action ${github.context.workflow} Deployed contracts\n\n${await testnetLinks()}`]);
   await exec.exec('git', ['reset', '--hard', 'HEAD']);
