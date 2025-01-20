@@ -33467,6 +33467,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.infraDir = exports.buildOutDir = exports.tmpBuildOutDir = exports.deploymentsDir = void 0;
 exports.setupDeploymentsFolder = setupDeploymentsFolder;
 exports.storeInfrastructureInfo = storeInfrastructureInfo;
+exports.currentJobFileBasename = currentJobFileBasename;
 exports.infraFileForCurrentJob = infraFileForCurrentJob;
 exports.readInfraForCurrentJob = readInfraForCurrentJob;
 exports.sanitizeFileName = sanitizeFileName;
@@ -33519,8 +33520,11 @@ async function storeInfrastructureInfo(networks) {
         core.warning(`Failed to store infrastructure information: ${err.message}`);
     }
 }
+function currentJobFileBasename() {
+    return sanitizeFileName(`${github.context.runNumber}-${github.context.workflow}-${github.context.job}`);
+}
 function infraFileForCurrentJob() {
-    const jobFileName = sanitizeFileName(`${github.context.runNumber}-${github.context.workflow}-${github.context.job}`);
+    const jobFileName = currentJobFileBasename();
     return path_1.default.join((0, exports.infraDir)(), `${jobFileName}.json`);
 }
 async function readInfraForCurrentJob() {

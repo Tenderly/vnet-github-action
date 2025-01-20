@@ -69,10 +69,14 @@ export async function storeInfrastructureInfo(networks: Record<string, NetworkIn
   }
 }
 
-export function infraFileForCurrentJob() {
-  const jobFileName = sanitizeFileName(
+export function currentJobFileBasename(){
+  return sanitizeFileName(
     `${github.context.runNumber}-${github.context.workflow}-${github.context.job}`
-  );
+  )
+}
+
+export function infraFileForCurrentJob() {
+  const jobFileName = currentJobFileBasename();
   return path.join(infraDir(), `${jobFileName}.json`);
 }
 

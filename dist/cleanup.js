@@ -33460,17 +33460,14 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(7484));
 const exec = __importStar(__nccwpck_require__(5236));
 const github = __importStar(__nccwpck_require__(3228));
 const fs_1 = __nccwpck_require__(9896);
-const path_1 = __importDefault(__nccwpck_require__(6928));
 const deployment_info_1 = __nccwpck_require__(7905);
 const tenderly_1 = __nccwpck_require__(7450);
+const foundry_logs_1 = __nccwpck_require__(2636);
 async function cleanup() {
     try {
         clearSensitiveData();
@@ -33482,7 +33479,8 @@ async function cleanup() {
         }
         if (mode === 'CD') {
             core.info('Running in CD mode - skipping TestNet cleanup');
-            await splitLogFiles((0, deployment_info_1.tmpBuildOutDir)(), (0, deployment_info_1.buildOutDir)());
+            const deploymentLogs = await (0, foundry_logs_1.parseDeploymentLogs)((0, deployment_info_1.tmpBuildOutDir)());
+            await fs_1.promises.writeFile(`${(0, deployment_info_1.buildOutDir)()}/${(0, deployment_info_1.currentJobFileBasename)()}-deployments.json`, JSON.stringify(deploymentLogs), 'utf-8');
             await push();
             core.info("Keeping containers on in CD mode");
             return;
@@ -33533,92 +33531,6 @@ async function push() {
     await exec.exec('git', ['reset', '--hard', 'HEAD']);
     await exec.exec('git', ['pull', '--rebase', 'origin', 'main']);
     await exec.exec('git', ['push']);
-}
-async function splitLogFiles(dirPath, outDirPath) {
-    try {
-        const files = await fs_1.promises.readdir(dirPath);
-        const jsonFiles = files.filter(file => path_1.default.extname(file) === '.json');
-        const results = {};
-        for (const file of jsonFiles) {
-            const filePath = path_1.default.join(dirPath, file);
-            const baseName = path_1.default.basename(file, '.json');
-            try {
-                const content = await fs_1.promises.readFile(filePath, 'utf8');
-                const lines = content.split('\n');
-                const generalLogs = [];
-                const deploymentInfo = [];
-                let isInDeploymentSection = false;
-                let currentDeployment = {
-                    address: null,
-                    chain: null,
-                    verification: []
-                };
-                for (const line of lines) {
-                    if (line.trim() === '##') {
-                        isInDeploymentSection = true;
-                        continue;
-                    }
-                    if (isInDeploymentSection) {
-                        if (line.includes('Start verifying contract')) {
-                            if (Object.keys(currentDeployment).length > 0) {
-                                deploymentInfo.push(currentDeployment);
-                            }
-                            currentDeployment = {
-                                address: line.match(/`(0x[a-fA-F0-9]+)`/)?.[1] || null,
-                                chain: line.match(/deployed on (\d+)/)?.[1] || null,
-                                verification: []
-                            };
-                        }
-                        else if (line.includes('Compiler version:')) {
-                            currentDeployment.compiler = line.split(':')[1]?.trim() || null;
-                        }
-                        else if (line.includes('Optimizations:')) {
-                            currentDeployment.optimizations = parseInt(line.split(':')[1]?.trim()) || null;
-                        }
-                        else if (line.includes('Submitting verification for')) {
-                            const contractMatch = line.match(/\[(.*?)\]/);
-                            if (contractMatch) {
-                                const [contractPath, contractName] = contractMatch[1].split(':');
-                                currentDeployment.contractPath = contractPath;
-                                currentDeployment.contractName = contractName;
-                            }
-                        }
-                        else if (line.includes('GUID:')) {
-                            currentDeployment.guid = line.match(/`(0x[a-fA-F0-9]+)`/)?.[1] || null;
-                        }
-                        else if (line.includes('Contract verification status:')) {
-                            currentDeployment.verification.push({
-                                status: lines[lines.indexOf(line) + 1]?.match(/Response: `(.+)`/)?.[1] || null,
-                                details: lines[lines.indexOf(line) + 2]?.match(/Details: `(.+)`/)?.[1] || null
-                            });
-                        }
-                    }
-                }
-                if (Object.keys(currentDeployment).length > 0) {
-                    deploymentInfo.push(currentDeployment);
-                }
-                const deployedPath = path_1.default.join(outDirPath, `deployed-${baseName}.json`);
-                await fs_1.promises.writeFile(deployedPath, JSON.stringify(deploymentInfo, null, 2));
-                core.info(`Contract deployment info saved to ${deployedPath}`);
-                results[file] = {
-                    deployedPath,
-                    stats: {
-                        generalLogs: generalLogs.length,
-                        deployments: deploymentInfo.length
-                    }
-                };
-            }
-            catch (error) {
-                const err = error;
-                results[file] = { error: `Failed to process file: ${err.message}` };
-            }
-        }
-        return results;
-    }
-    catch (error) {
-        const err = error;
-        throw new Error(`Failed to process directory: ${err.message}`);
-    }
 }
 async function testnetLinks() {
     const networks = (await (0, deployment_info_1.readInfraForCurrentJob)())?.networks;
@@ -33676,6 +33588,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.infraDir = exports.buildOutDir = exports.tmpBuildOutDir = exports.deploymentsDir = void 0;
 exports.setupDeploymentsFolder = setupDeploymentsFolder;
 exports.storeInfrastructureInfo = storeInfrastructureInfo;
+exports.currentJobFileBasename = currentJobFileBasename;
 exports.infraFileForCurrentJob = infraFileForCurrentJob;
 exports.readInfraForCurrentJob = readInfraForCurrentJob;
 exports.sanitizeFileName = sanitizeFileName;
@@ -33728,8 +33641,11 @@ async function storeInfrastructureInfo(networks) {
         core.warning(`Failed to store infrastructure information: ${err.message}`);
     }
 }
+function currentJobFileBasename() {
+    return sanitizeFileName(`${github.context.runNumber}-${github.context.workflow}-${github.context.job}`);
+}
 function infraFileForCurrentJob() {
-    const jobFileName = sanitizeFileName(`${github.context.runNumber}-${github.context.workflow}-${github.context.job}`);
+    const jobFileName = currentJobFileBasename();
     return path_1.default.join((0, exports.infraDir)(), `${jobFileName}.json`);
 }
 async function readInfraForCurrentJob() {
@@ -33760,6 +33676,139 @@ async function createInfraDir() {
     if (!(0, fs_1.existsSync)((0, exports.infraDir)())) {
         await fs_2.promises.mkdir((0, exports.infraDir)(), { recursive: true });
     }
+}
+
+
+/***/ }),
+
+/***/ 2636:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.parseDeploymentLogs = parseDeploymentLogs;
+const fs_1 = __nccwpck_require__(9896);
+const path_1 = __importDefault(__nccwpck_require__(6928));
+const github = __importStar(__nccwpck_require__(3228));
+const deployment_info_1 = __nccwpck_require__(7905);
+function extractRunNumber(filename) {
+    const match = filename.match(/^(\d+)-/);
+    if (!match) {
+        throw new Error(`Unable to extract run number from filename: ${filename}`);
+    }
+    return parseInt(match[1], 10);
+}
+async function parseDeploymentLogs(dirPath) {
+    const files = await fs_1.promises.readdir(dirPath);
+    const jsonFiles = files.filter(file => path_1.default.extname(file) === '.json');
+    const workflowInfo = {
+        runNumber: github.context.runNumber,
+        workflow: github.context.workflow,
+        job: github.context.job,
+        runId: github.context.runId
+    };
+    const deploymentGroups = [];
+    const infraInfo = await (0, deployment_info_1.readInfraForCurrentJob)();
+    if (!infraInfo) {
+        throw new Error('No infrastructure information found');
+    }
+    for (const file of jsonFiles) {
+        const filePath = path_1.default.join(dirPath, file);
+        const content = await fs_1.promises.readFile(filePath, 'utf8');
+        const lines = content.split('\n');
+        let currentContract = {};
+        const contracts = [];
+        let isInDeploymentSection = false;
+        for (const line of lines) {
+            if (line.trim() === '##') {
+                isInDeploymentSection = true;
+                continue;
+            }
+            if (isInDeploymentSection) {
+                if (line.includes('Start verifying contract')) {
+                    if (Object.keys(currentContract).length > 0) {
+                        contracts.push(currentContract);
+                    }
+                    currentContract = {
+                        address: line.match(/`(0x[a-fA-F0-9]+)`/)?.[1] || '',
+                        chain: line.match(/deployed on (\d+)/)?.[1] || '',
+                        verificationStatus: null
+                    };
+                }
+                else if (line.includes('Compiler version:')) {
+                    currentContract.compiler = line.split(':')[1]?.trim() || null;
+                }
+                else if (line.includes('Optimizations:')) {
+                    currentContract.optimizations = parseInt(line.split(':')[1]?.trim()) || null;
+                }
+                else if (line.includes('Submitting verification for')) {
+                    const contractMatch = line.match(/\[(.*?)\]/);
+                    if (contractMatch) {
+                        const [contractPath, contractName] = contractMatch[1].split(':');
+                        currentContract.contractPath = contractPath;
+                        currentContract.contractName = contractName;
+                    }
+                }
+                else if (line.includes('Contract verification status:')) {
+                    currentContract.verificationStatus = lines[lines.indexOf(line) + 1]?.match(/Response: `(.+)`/)?.[1] || null;
+                }
+            }
+        }
+        if (Object.keys(currentContract).length > 0) {
+            contracts.push(currentContract);
+        }
+        // Match contracts with their virtual testnet based on chainId
+        for (const network of Object.values(infraInfo.networks)) {
+            const matchingContracts = contracts.filter(contract => contract.chain === network.chainId.toString());
+            if (matchingContracts.length > 0) {
+                deploymentGroups.push({
+                    virtualTestNet: network,
+                    contracts: matchingContracts
+                });
+            }
+        }
+    }
+    return {
+        workflow: workflowInfo,
+        deployments: deploymentGroups
+    };
 }
 
 
