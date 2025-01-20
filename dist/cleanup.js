@@ -33529,7 +33529,7 @@ async function push() {
     await exec.exec('git', ['commit', '-m',
         `[skip actions] GitHub Action ${github.context.workflow} Deployed contracts\n\n${await testnetLinks()}`]);
     await exec.exec('git', ['reset', '--hard', 'HEAD']);
-    await exec.exec('git', ['pull', '--rebase', 'origin', 'main']);
+    await exec.exec('git', ['pull', '--rebase', 'origin', github.context.ref]);
     await exec.exec('git', ['push']);
 }
 async function testnetLinks() {
