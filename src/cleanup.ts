@@ -1,10 +1,11 @@
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as github from '@actions/github';
-import { promises as fs } from 'fs';
+import { promises as fs, writeFile, writeFileSync } from 'fs';
 import path from 'path';
-import { buildOutDir, readInfraForCurrentJob, tmpBuildOutDir } from './deployment-info';
+import { buildOutDir, currentJobFileBasename, readInfraForCurrentJob, tmpBuildOutDir } from './deployment-info';
 import { stopVirtualTestNet } from './tenderly';
+import { parseDeploymentLogs } from './foundry-logs';
 
 interface DeploymentVerification {
   status: string | null;
@@ -46,7 +47,8 @@ async function cleanup(): Promise<void> {
 
     if (mode === 'CD') {
       core.info('Running in CD mode - skipping TestNet cleanup');
-      await splitLogFiles(tmpBuildOutDir(), buildOutDir());
+      const deploymentLogs = await parseDeploymentLogs(tmpBuildOutDir());
+      await fs.writeFile(`${buildOutDir()}/${currentJobFileBasename()}-deployments.json`, JSON.stringify(deploymentLogs), 'utf-8');
       await push();
       core.info("Keeping containers on in CD mode");
       return; 
@@ -106,99 +108,7 @@ async function push(): Promise<void> {
   await exec.exec('git', ['push']);
 }
 
-async function splitLogFiles(dirPath: string, outDirPath: string): Promise<Record<string, ProcessingResult>> {
-  try {
-    const files = await fs.readdir(dirPath);
-    const jsonFiles = files.filter(file => path.extname(file) === '.json');
 
-    const results: Record<string, ProcessingResult> = {};
-
-    for (const file of jsonFiles) {
-      const filePath = path.join(dirPath, file);
-      const baseName = path.basename(file, '.json');
-
-      try {
-        const content = await fs.readFile(filePath, 'utf8');
-        const lines = content.split('\n');
-
-        const generalLogs: any[] = [];
-        const deploymentInfo: Deployment[] = [];
-        let isInDeploymentSection = false;
-        let currentDeployment: Deployment = {
-          address: null,
-          chain: null,
-          verification: []
-        };
-
-        for (const line of lines) {
-          if (line.trim() === '##') {
-            isInDeploymentSection = true;
-            continue;
-          }
-
-          if (isInDeploymentSection) {
-            if (line.includes('Start verifying contract')) {
-              if (Object.keys(currentDeployment).length > 0) {
-                deploymentInfo.push(currentDeployment);
-              }
-              currentDeployment = {
-                address: line.match(/`(0x[a-fA-F0-9]+)`/)?.[1] || null,
-                chain: line.match(/deployed on (\d+)/)?.[1] || null,
-                verification: []
-              };
-            } else if (line.includes('Compiler version:')) {
-              currentDeployment.compiler = line.split(':')[1]?.trim() || null;
-            } else if (line.includes('Optimizations:')) {
-              currentDeployment.optimizations = parseInt(line.split(':')[1]?.trim()) || null;
-            } else if (line.includes('Submitting verification for')) {
-              const contractMatch = line.match(/\[(.*?)\]/);
-              if (contractMatch) {
-                const [contractPath, contractName] = contractMatch[1].split(':');
-                currentDeployment.contractPath = contractPath;
-                currentDeployment.contractName = contractName;
-              }
-            } else if (line.includes('GUID:')) {
-              currentDeployment.guid = line.match(/`(0x[a-fA-F0-9]+)`/)?.[1] || null;
-            } else if (line.includes('Contract verification status:')) {
-              currentDeployment.verification.push({
-                status: lines[lines.indexOf(line) + 1]?.match(/Response: `(.+)`/)?.[1] || null,
-                details: lines[lines.indexOf(line) + 2]?.match(/Details: `(.+)`/)?.[1] || null
-              });
-            }
-          }
-        }
-
-        if (Object.keys(currentDeployment).length > 0) {
-          deploymentInfo.push(currentDeployment);
-        }
-
-        const deployedPath = path.join(outDirPath, `deployed-${baseName}.json`);
-
-        await fs.writeFile(deployedPath, JSON.stringify(deploymentInfo, null, 2));
-        
-        core.info(`Contract deployment info saved to ${deployedPath}`);
-        
-        results[file] = {
-          deployedPath,
-          stats: {
-            generalLogs: generalLogs.length,
-            deployments: deploymentInfo.length
-          }
-        };
-
-      } catch (error) {
-        const err = error as Error;
-        results[file] = { error: `Failed to process file: ${err.message}` };
-      }
-    }
-
-    return results;
-
-  } catch (error) {
-    const err = error as Error;
-    throw new Error(`Failed to process directory: ${err.message}`);
-  }
-}
 
 async function testnetLinks() {
   const networks = (await readInfraForCurrentJob())?.networks;
