@@ -5,10 +5,10 @@ import { existsSync, promises as fs } from 'fs';
 import path from 'path';
 import { TestNetResponse } from './types';
 
-export const deploymentsDir = path.join(process.env.GITHUB_WORKSPACE || "", '/.tenderly');
+export const deploymentsDir = path.join(process.env.GITHUB_WORKSPACE || '', '/.tenderly');
 export const tmpBuildOutDir = (): string => path.join(deploymentsDir, 'tmp');
 export const buildOutDir = (): string => deploymentsDir;
-export const infraDir = () => path.join(deploymentsDir, "infra");
+export const infraDir = () => path.join(deploymentsDir, 'infra');
 
 export interface InfrastructureInfo {
   networks: Record<string, NetworkInfo>;
@@ -32,34 +32,33 @@ export async function setupDeploymentsFolder(): Promise<void> {
   const tmpDir = tmpBuildOutDir();
   if (!existsSync(tmpDir)) {
     await io.mkdirP(tmpDir);
-    core.info("TMP deployment folder " + tmpDir);
+    core.info('TMP deployment folder ' + tmpDir);
   }
 
   // Ensure .tenderly directory exists
   const tenderlyDir = path.join(process.env.GITHUB_WORKSPACE || '', '.tenderly');
   if (!existsSync(tenderlyDir)) {
     await io.mkdirP(tenderlyDir);
-    core.info("Created .tenderly folder");
+    core.info('Created .tenderly folder');
   }
 
-  core.info("Created deployments folder " + deploymentsDir);
+  core.info('Created deployments folder ' + deploymentsDir);
 }
 
 export async function storeInfrastructureInfo(networks: Record<string, NetworkInfo>): Promise<void> {
   try {
-
     const infraInfo: InfrastructureInfo = {
-      networks,
+      networks: sanitizeInfraInfo(networks),
       timestamp: new Date().toISOString(),
       githubContext: {
         workflow: process.env.GITHUB_WORKFLOW || '',
         runId: process.env.GITHUB_RUN_ID || '',
         runNumber: process.env.GITHUB_RUN_NUMBER || '',
-        job: process.env.GITHUB_JOB || ''
-      }
+        job: process.env.GITHUB_JOB || '',
+      },
     };
 
-    const infraFile = infraFileForCurrentJob()
+    const infraFile = infraFileForCurrentJob();
     await fs.writeFile(infraFile, JSON.stringify(infraInfo, null, 2));
     core.info(`Infrastructure information stored in ${infraFile}`);
   } catch (error) {
@@ -68,10 +67,19 @@ export async function storeInfrastructureInfo(networks: Record<string, NetworkIn
   }
 }
 
-export function currentJobFileBasename(){
+function sanitizeInfraInfo(networks: Record<string, NetworkInfo>) {
+  return Object.fromEntries(
+    Object.entries(networks).map(([key, network]) => {
+      const { adminRpcUrl, ...rest } = network;
+      return [key, rest];
+    }),
+  ) as typeof networks;
+}
+
+export function currentJobFileBasename() {
   return sanitizeFileName(
-    `${github.context.runNumber}-${github.context.workflow}-${github.context.job}`
-  )
+    `${github.context.runNumber}-${github.context.workflow}-${github.context.job}`,
+  );
 }
 
 export function infraFileForCurrentJob() {
