@@ -1,0 +1,773 @@
+// @filename: src/tenderly.ts
+import * as core from '@actions/core';
+import axios from 'axios';
+import fs from 'fs/promises';
+import os from 'os';
+import path from 'path';
+import { TenderlyApiResponse, TestNetResponse } from './types';
+
+const API_BASE_URL = 'https://api.tenderly.co/api/v1';
+
+interface TestNetInputs {
+  testnetName: string;
+  accountName: string;
+  projectName: string;
+  accessKey: string;
+  networkId: string;
+  chainId: string | number;
+  blockNumber: string;
+  stateSync: boolean;
+  publicExplorer: boolean;
+  verificationVisibility: 'bytecode' | 'abi' | 'src';
+}
+
+async function createVirtualTestNet(inputs: TestNetInputs): Promise<TestNetResponse> {
+  try {
+    core.debug('Creating Virtual TestNet with inputs: ' + JSON.stringify(inputs));
+    const slug = uniqueTestNetSlug(inputs.testnetName);
+
+    const requestData = {
+      slug,
+      display_name: inputs.testnetName,
+      fork_config: {
+        network_id: parseInt(inputs.networkId),
+        block_number: inputs.blockNumber
+      },
+      virtual_network_config: {
+        chain_config: {
+          chain_id: parseInt(inputs.chainId.toString())
+        }
+      },
+      sync_state_config: {
+        enabled: inputs.stateSync
+      },
+      explorer_page_config: {
+        enabled: inputs.publicExplorer,
+        verification_visibility: inputs.verificationVisibility
+      }
+    };
+
+    const response = await axios.post<TenderlyApiResponse>(
+      `${API_BASE_URL}/account/${inputs.accountName}/project/${inputs.projectName}/vnets`,
+      requestData,
+      {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-Access-Key': inputs.accessKey
+        }
+      }
+    );
+
+    const { data } = response;
+    if (!data) throw new Error('No data returned from Tenderly API');
+    if (!Array.isArray(data.rpcs)) throw new Error(`Invalid RPC data in response: ${JSON.stringify(data)}`);
+
+    const adminRpc = data.rpcs.find(rpc => rpc.name === 'Admin RPC');
+    const publicRpc = data.rpcs.find(rpc => rpc.name === 'Public RPC');
+
+    if (!adminRpc || !publicRpc) {
+      throw new Error(`Missing RPC endpoints in response: ${JSON.stringify(data.rpcs)}`);
+    }
+
+    return {
+      id: data.id,
+      adminRpcUrl: adminRpc.url,
+      publicRpcUrl: publicRpc.url
+    };
+
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      core.debug('API Error Response: ' + JSON.stringify(error.response.data));
+      const message = error.response.data?.error?.message || JSON.stringify(error.response.data);
+      throw new Error(`Failed to create TestNet: ${message}`);
+    }
+    throw error;
+  }
+}
+
+function uniqueTestNetSlug(testnetName: string): string {
+  const timestamp = Math.floor(Date.now() / 1000);
+  return `${testnetName
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')}-${timestamp}`;
+}
+
+async function setupTenderlyConfig(accessKey: string): Promise<void> {
+  try {
+    const configDir = path.join(os.homedir(), '.tenderly');
+    const configFile = path.join(configDir, 'config.yaml');
+
+    await fs.mkdir(configDir, { recursive: true });
+    await fs.writeFile(configFile, `access_key: ${accessKey}`);
+    
+    core.debug('Tenderly config file created successfully');
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Failed to create Tenderly config: ${error.message}`);
+    }
+    throw error;
+  }
+}
+
+interface StopTestNetInputs {
+  testnetId: string;
+  accountName: string;
+  projectName: string;
+  accessKey: string;
+}
+
+/**
+ * Pauses virtual TestNet execution, but keeps data intact.
+ * @param inputs API access inputs
+ * @returns 
+ */
+async function stopVirtualTestNet(inputs: StopTestNetInputs): Promise<any> {
+  try {
+    if (!inputs.testnetId) throw new Error('TestNet ID is required for cleanup');
+
+    const response = await axios.patch(
+      `${API_BASE_URL}/account/${inputs.accountName}/project/${inputs.projectName}/vnets/${inputs.testnetId}`,
+      { status: 'stopped' },
+      {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-Access-Key': inputs.accessKey
+        }
+      }
+    );
+
+    core.debug('TestNet stopped successfully');
+    return response.data;
+
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      core.debug('API Error Response:' + JSON.stringify(error.response.data, null, 2));
+      const message = error.response.data?.error?.message || JSON.stringify(error.response.data);
+      throw new Error(`Failed to stop TestNet: ${message}`);
+    }
+    throw error;
+  }
+}
+
+export {
+  createVirtualTestNet, setupTenderlyConfig, StopTestNetInputs, stopVirtualTestNet, TestNetInputs,
+  TestNetResponse
+};
+
+
+// @filename: src/cleanup.ts
+import * as core from '@actions/core';
+import * as exec from '@actions/exec';
+import * as github from '@actions/github';
+import { promises as fs } from 'fs';
+import { buildOutDir, currentJobFileBasename, InfrastructureInfo, readInfraForCurrentJob, tmpBuildOutDir } from './deployment-info';
+import { ParsedDeployments, parseDeploymentLogs } from './foundry-logs';
+import { stopVirtualTestNet } from './tenderly';
+
+interface DeploymentVerification {
+  status: string | null;
+  details: string | null;
+}
+
+interface Deployment {
+  address: string | null;
+  chain: string | null;
+  compiler?: string | null;
+  optimizations?: number | null;
+  contractPath?: string;
+  contractName?: string;
+  guid?: string | null;
+  url?: string | null;
+  verification: DeploymentVerification[];
+}
+
+interface ProcessingResult {
+  generalPath?: string;
+  deployedPath?: string;
+  stats?: {
+    generalLogs: number;
+    deployments: number;
+  };
+  error?: string;
+}
+
+async function cleanup(): Promise<void> {
+  try {
+    clearSensitiveData();
+    const mode = core.getInput('mode').toUpperCase();
+
+    const infra = await readInfraForCurrentJob();
+    if (!infra) {
+      core.warning('No infrastructure information found to cleanup');
+      return;
+    }
+
+    if (mode === 'CD') {
+      core.info('Running in CD mode - persisting deployment info');
+      await persistDeploymentInfo();
+      // push foundry deployment info in .tenderly./ or hardhat-ignition + all the files frameworks produced
+      await push();
+      core.info("Keeping containers ON in CD mode");
+    }
+
+    if (mode === 'CI') {
+      await pauseVirtualTestNet(infra);
+    }
+  } catch (error) {
+    const err = error as Error;
+    core.warning(`Failed to stop Virtual TestNet: ${err.message}`);
+  }
+}
+
+async function clearSensitiveData() {
+  return await exec.exec('git', ['checkout', '--', '**/foundry.toml']);
+}
+
+async function push(): Promise<void> {
+  const pushOnComplete = core.getBooleanInput('push_on_complete');
+  if (!pushOnComplete) return;
+  await exec.exec('git', ['config', '--global', 'user.name', `GitHub Action${github.context.workflow}`]);
+  await exec.exec('git', ['config', '--global', 'user.email', 'action@github.com']);
+
+  const token = process.env.GITHUB_TOKEN;
+  const repo = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}`;
+
+
+  await exec.exec('git', ['remote', 'set-url', 'origin',
+    `https://x-access-token:${token}@${repo.replace('https://', '')}`]);
+  await exec.exec('git', ['add', '.']);
+  await exec.exec('git', ['commit', '-m',
+    `[skip actions] GitHub Action ${github.context.workflow} Deployed contracts\n\n${await testnetLinks()}`]);
+  await exec.exec('git', ['reset', '--hard', 'HEAD']);
+  await exec.exec('git', ['pull', '--rebase', 'origin', github.context.ref]);
+  await exec.exec('git', ['push']);
+}
+
+
+
+async function testnetLinks() {
+  const networks = (await readInfraForCurrentJob())?.networks;
+
+  return Object.values(networks!).map(m => {
+    return `${m.chainId}: ${m.adminRpcUrl}`
+  }).join("\n");
+}
+
+cleanup();
+
+async function persistDeployment(deploymentLogs: ParsedDeployments) {
+  await fs.writeFile(`${buildOutDir()}/${currentJobFileBasename()}-deployments.json`, JSON.stringify(deploymentLogs, null, 2), 'utf-8');
+}
+
+async function persistDeploymentInfo() {
+  const deploymentInfo = await parseDeploymentLogs(tmpBuildOutDir());
+  // remove tmp out dir after parsing - no need for that anymore
+  fs.rm(tmpBuildOutDir(), { recursive: true });
+  // persist only if there are deployments present
+  if (deploymentInfo.deployments.length > 0) {
+    core.debug(JSON.stringify(deploymentInfo, null, 2));
+    await persistDeployment(deploymentInfo);
+  }
+}
+
+async function pauseVirtualTestNet(infra: InfrastructureInfo) {
+  const baseInputs = {
+    accessKey: core.getInput('access_key'),
+    projectName: process.env.TENDERLY_PROJECT_NAME || '',
+    accountName: process.env.TENDERLY_ACCOUNT_NAME || '',
+  };
+
+  await Promise.allSettled(
+    Object.values(infra.networks).map(async (network) => {
+      try {
+        await stopVirtualTestNet({
+          ...baseInputs,
+          testnetId: network.id
+        });
+        core.info(`Stopped Virtual TestNet ${network.id} for network ${network.networkId}`);
+        return network.id;
+      } catch (error) {
+        const err = error as Error;
+        core.warning(`Failed to stop TestNet ${network.id}: ${err.message}`);
+        throw error;
+      }
+    })
+  );
+  core.info('Virtual TestNet stopped successfully');
+}
+
+// @filename: src/types.ts
+export interface TestNetInputs {
+  accessKey: string;
+  projectName: string;
+  accountName: string;
+  testnetName: string;
+  networkId: string;
+  chainId: number;
+  blockNumber: string;
+  stateSync: boolean;
+  publicExplorer: boolean;
+  verificationVisibility: 'bytecode' | 'abi' | 'src';
+  testnetSlug?: string;
+}
+
+export interface TestNetResponse {
+  id: string;
+  adminRpcUrl: string;
+  publicRpcUrl: string;
+}
+
+export interface RpcEndpoint {
+  name: string;
+  url: string;
+}
+
+export interface TenderlyApiResponse {
+  id: string;
+  rpcs: RpcEndpoint[];
+}
+
+// @filename: src/foundry-logs.ts
+import * as github from '@actions/github';
+import { promises as fs } from 'fs';
+import path from 'path';
+import { readInfraForCurrentJob } from './deployment-info';
+
+interface WorkflowInfo {
+  runNumber: number;
+  workflow: string;
+  job: string;
+  runId: number;
+}
+
+interface Contract {
+  address: string;
+  chain: string;
+  verificationStatus: string | null;
+  compiler: string | null;
+  optimizations: number | null;
+  contractPath: string;
+  contractName: string;
+}
+
+interface VirtualTestNet {
+  id: string;
+  adminRpcUrl: string;
+  publicRpcUrl: string;
+  networkId: string;
+  chainId: number;
+  testnetSlug: string;
+  explorerUrl?: string;
+}
+
+interface DeploymentGroup {
+  virtualTestNet: VirtualTestNet;
+  contracts: Contract[];
+}
+
+interface ParsedDeployments {
+  workflow: WorkflowInfo;
+  deployments: DeploymentGroup[];
+}
+
+function extractRunNumber(filename: string): number {
+  const match = filename.match(/^(\d+)-/);
+  if (!match) {
+    throw new Error(`Unable to extract run number from filename: ${filename}`);
+  }
+  return parseInt(match[1], 10);
+}
+
+/**
+ * Parses foundry deployment logs (output from `--json` flag) and returns the parsed data. 
+ * 
+ * Note: [Foundry docs](https://book.getfoundry.sh/reference/forge/forge-script) states the output is under development and prone to change.
+ * @param tmpDirPath logs dir path
+ * @returns parsed deployment logs
+ */
+async function parseDeploymentLogs(tmpDirPath: string): Promise<ParsedDeployments> {
+  const files = await fs.readdir(tmpDirPath);
+  const jsonFiles = files.filter(file => path.extname(file) === '.json');
+  
+  const workflowInfo: WorkflowInfo = {
+    runNumber: github.context.runNumber,
+    workflow: github.context.workflow,
+    job: github.context.job,
+    runId: github.context.runId
+  };
+
+  const deploymentGroups: DeploymentGroup[] = [];
+  const infraInfo = await readInfraForCurrentJob();
+
+  if (!infraInfo) {
+    throw new Error('No infrastructure information found');
+  }
+
+  for (const file of jsonFiles) {
+    const filePath = path.join(tmpDirPath, file);
+    const content = await fs.readFile(filePath, 'utf8');
+    const lines = content.split('\n');
+
+    let currentContract: Partial<Contract> = {};
+    const contracts: Contract[] = [];
+    let isInDeploymentSection = false;
+
+    for (const line of lines) {
+      if (line.trim() === '##') {
+        isInDeploymentSection = true;
+        continue;
+      }
+
+      if (isInDeploymentSection) {
+        if (line.includes('Start verifying contract')) {
+          if (Object.keys(currentContract).length > 0) {
+            contracts.push(currentContract as Contract);
+          }
+          currentContract = {
+            address: line.match(/`(0x[a-fA-F0-9]+)`/)?.[1] || '',
+            chain: line.match(/deployed on (\d+)/)?.[1] || '',
+            verificationStatus: null
+          };
+        } else if (line.includes('Compiler version:')) {
+          currentContract.compiler = line.split(':')[1]?.trim() || null;
+        } else if (line.includes('Optimizations:')) {
+          currentContract.optimizations = parseInt(line.split(':')[1]?.trim()) || null;
+        } else if (line.includes('Submitting verification for')) {
+          const contractMatch = line.match(/\[(.*?)\]/);
+          if (contractMatch) {
+            const [contractPath, contractName] = contractMatch[1].split(':');
+            currentContract.contractPath = contractPath;
+            currentContract.contractName = contractName;
+          }
+        } else if (line.includes('Contract verification status:')) {
+          currentContract.verificationStatus = lines[lines.indexOf(line) + 1]?.match(/Response: `(.+)`/)?.[1] || null;
+        }
+      }
+    }
+
+    if (Object.keys(currentContract).length > 0) {
+      contracts.push(currentContract as Contract);
+    }
+
+    // Match contracts with their virtual testnet based on chainId
+    for (const network of Object.values(infraInfo.networks)) {
+      const matchingContracts = contracts.filter(
+        contract => contract.chain === network.chainId.toString()
+      );
+
+      if (matchingContracts.length > 0) {
+        deploymentGroups.push({
+          virtualTestNet: network,
+          contracts: matchingContracts
+        });
+      }
+    }
+  }
+
+  return {
+    workflow: workflowInfo,
+    deployments: deploymentGroups
+  };
+}
+
+export {
+  Contract, DeploymentGroup, ParsedDeployments, parseDeploymentLogs, VirtualTestNet,
+  WorkflowInfo
+};
+
+
+// @filename: src/index.ts
+import * as core from '@actions/core';
+import * as github from '@actions/github';
+import { createInfraDir, NetworkInfo, setupDeploymentsFolder, storeInfrastructureInfo, tmpBuildOutDir } from './deployment-info';
+import { createVirtualTestNet, setupTenderlyConfig } from './tenderly';
+import { TestNetInputs } from './types';
+
+/**
+ * Provides a unique build slug for the current run.
+ * @returns Build slug
+ */
+function buildSlug(){
+  return `${github.context.runNumber}-${github.context.runId}`
+}
+
+/**
+ * Generates a unique slug for the testnet, related to the current run and target network.
+ * @param testnetName testnet name
+ * @param networkId network id
+ * @returns unique slug
+ */
+function generateSlug(testnetName: string, networkId: string): string {
+  return `${github.context.runNumber}-${testnetName}-net-${networkId}-${github.context.workflow}-${github.context.job}-${github.context.runId}`
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/\//g, '-')
+    .replace(/[^a-z0-9-]/g, '');
+}
+
+function validateInputs(inputs: TestNetInputs): boolean {
+  const requiredInputs = {
+    accessKey: { required: true },
+    projectName: { required: true },
+    accountName: { required: true },
+    testnetName: { required: true },
+    networkId: { required: true, isNumeric: true },
+    blockNumber: { required: true },
+    publicExplorer: { required: false, isBoolean: true },
+    verificationVisibility: { required: false, isOneOf: ['bytecode', 'abi', 'src'] as const }
+  };
+
+  Object.entries(requiredInputs).forEach(([key, rules]) => {
+    const value = inputs[key as keyof TestNetInputs];
+
+    if (rules.required && (!value || String(value).trim() === '')) {
+      throw new Error(`Input '${key}' is required`);
+    }
+
+    if ('isNumeric' in rules && value && isNaN(parseInt(String(value)))) {
+      throw new Error(`Input '${key}' must be a valid number`);
+    }
+
+    if ('isBoolean' in rules && value !== undefined && typeof value !== 'boolean') {
+      throw new Error(`Input '${key}' must be a boolean`);
+    }
+
+    if ('isOneOf' in rules && value && !rules.isOneOf.includes(value as any)) {
+      throw new Error(`Input '${key}' must be one of: ${rules.isOneOf.join(', ')}`);
+    }
+  });
+
+  core.debug('Input validation passed');
+  return true;
+}
+
+/**
+ * Exports the value as an environment variable (redacted in logs) with the given key.
+ * See {@link exportSecretlyWithNetworkId} for exporting secrets.
+ * 
+ * @param key Variable key
+ * @param value Value
+ * @param networkId Network ID to export the secret to
+ */
+function exportWithNetworkId(key: string, value: string | number, networkId: string): void {
+  core.exportVariable(`${key}_${networkId}`, value);
+}
+
+/**
+ * Exports the value as a secret environment variable (redacted in logs) with the given key.
+ * See {@link exportWithNetworkId} for exporting non-secret values.
+ * 
+ * @param key Variable key
+ * @param value Value
+ * @param networkId Network ID to export the secret to
+ */
+function exportSecretlyWithNetworkId(key: string, value: string | number, networkId: string): void {
+  core.setSecret(value.toString());
+  exportWithNetworkId(key, value, networkId);
+}
+
+async function run(): Promise<void> {
+  try {
+    const mode = core.getInput('mode').toUpperCase();
+    const chainIdPrefix = core.getInput('chain_id_prefix', { trimWhitespace: true });
+    const inputs: Omit<TestNetInputs, 'chainId'> & { chainId: number } = {
+      accessKey: core.getInput('access_key', { required: true, trimWhitespace: true }),
+      projectName: core.getInput('project_name', { required: true, trimWhitespace: true }),
+      accountName: core.getInput('account_name', { required: true, trimWhitespace: true }),
+      testnetName: core.getInput('testnet_name', { required: true, trimWhitespace: true }),
+      blockNumber: core.getInput('block_number', { required: true, trimWhitespace: true }),
+      stateSync: core.getBooleanInput('state_sync', { trimWhitespace: true }),
+      publicExplorer: core.getBooleanInput('public_explorer', { trimWhitespace: true }),
+      verificationVisibility: core.getInput('verification_visibility', { trimWhitespace: true }) as TestNetInputs['verificationVisibility'],
+      networkId: '',
+      chainId: 0
+    };
+
+    core.exportVariable('TENDERLY_ACCOUNT_NAME', inputs.accountName);
+    core.exportVariable('TENDERLY_PROJECT_NAME', inputs.projectName);
+    core.exportVariable('TENDERLY_ACCESS_KEY', inputs.accessKey);
+
+    if (!inputs.publicExplorer) {
+      inputs.verificationVisibility = 'bytecode';
+    }
+
+    const networkIds = core.getMultilineInput("network_id");
+    const networkInfo: Record<string, NetworkInfo> = {};
+
+    await Promise.all(
+      networkIds.map(async networkId => {
+        const networkInputs: TestNetInputs = {
+          ...inputs,
+          networkId,
+          chainId: parseInt(chainIdPrefix + networkId),
+          testnetSlug: generateSlug(inputs.testnetName, networkId)
+        };
+        networkInputs.testnetName = networkInputs.testnetSlug || '';
+
+        validateInputs(networkInputs);
+        const testNet = await createVirtualTestNet(networkInputs);
+
+        // Store network info
+        networkInfo[networkId] = {
+          ...testNet,
+          networkId,
+          chainId: networkInputs.chainId,
+          testnetSlug: networkInputs.testnetSlug || '',
+          explorerUrl: inputs.publicExplorer ? `https://dashboard.tenderly.co/explorer/vnet/${testNet.id}/transactions` : undefined
+        };
+
+        // export relevant network variables
+        exportWithNetworkId('TENDERLY_TESTNET_ID', testNet.id, networkId);
+        exportSecretlyWithNetworkId('TENDERLY_ADMIN_RPC_URL', testNet.adminRpcUrl, networkId);
+        exportWithNetworkId('TENDERLY_PUBLIC_RPC_URL', testNet.publicRpcUrl, networkId);
+        exportWithNetworkId('TENDERLY_TESTNET_SLUG', networkInputs.testnetSlug || '', networkId);
+        exportWithNetworkId('TENDERLY_CHAIN_ID', networkInputs.chainId, networkId);
+        exportWithNetworkId('TENDERLY_FOUNDRY_VERIFICATION_URL', `${testNet.adminRpcUrl}/verify/etherscan`, networkId);
+        
+        const buildOutputFile = `${tmpBuildOutDir()}/${networkInputs.testnetSlug}.json`;
+        exportWithNetworkId("BUILD_OUTPUT_FILE", buildOutputFile, networkId);
+        
+        core.exportVariable('BUILD_SLUG', buildSlug());
+        core.info(`Build output to ${buildOutputFile}`);
+        core.info('Tenderly Virtual TestNet created successfully');
+        core.info(`TestNet ID: ${testNet.id}`);
+        core.info(`TestNet Slug: ${networkInputs.testnetSlug}`);
+        core.info(`Admin RPC URL: ${testNet.adminRpcUrl}`);
+        core.info(`Public RPC URL: ${testNet.publicRpcUrl}`);
+        core.info(`Foundry Verification URL: ${testNet.adminRpcUrl}/verify/etherscan`);
+        return testNet;
+      })
+    );
+
+    if (mode === 'CD') {
+      await setupDeploymentsFolder();
+    }
+    await createInfraDir();
+    await storeInfrastructureInfo(networkInfo);
+
+    await setupTenderlyConfig(inputs.accessKey);
+  } catch (error) {
+    const err = error as Error;
+    core.setFailed(err.message);
+  }
+}
+
+run();
+
+// @filename: src/deployment-info.ts
+import * as core from '@actions/core';
+import * as github from '@actions/github';
+import * as io from '@actions/io';
+import { existsSync, promises as fs } from 'fs';
+import path from 'path';
+import { TestNetResponse } from './types';
+
+export const deploymentsDir = path.join(process.env.GITHUB_WORKSPACE || "", '/.tenderly');
+export const tmpBuildOutDir = (): string => path.join(deploymentsDir, 'tmp');
+export const buildOutDir = (): string => deploymentsDir;
+export const infraDir = () => path.join(deploymentsDir, "infra");
+
+export interface InfrastructureInfo {
+  networks: Record<string, NetworkInfo>;
+  timestamp: string;
+  githubContext: {
+    workflow: string;
+    runId: string;
+    runNumber: string;
+    job: string;
+  };
+}
+
+export interface NetworkInfo extends TestNetResponse {
+  networkId: string;
+  chainId: number;
+  testnetSlug: string;
+  explorerUrl?: string;
+}
+
+export async function setupDeploymentsFolder(): Promise<void> {
+  const tmpDir = tmpBuildOutDir();
+  if (!existsSync(tmpDir)) {
+    await io.mkdirP(tmpDir);
+    core.info("TMP deployment folder " + tmpDir);
+  }
+
+  // Ensure .tenderly directory exists
+  const tenderlyDir = path.join(process.env.GITHUB_WORKSPACE || '', '.tenderly');
+  if (!existsSync(tenderlyDir)) {
+    await io.mkdirP(tenderlyDir);
+    core.info("Created .tenderly folder");
+  }
+
+  core.info("Created deployments folder " + deploymentsDir);
+}
+
+export async function storeInfrastructureInfo(networks: Record<string, NetworkInfo>): Promise<void> {
+  try {
+
+    const infraInfo: InfrastructureInfo = {
+      networks,
+      timestamp: new Date().toISOString(),
+      githubContext: {
+        workflow: process.env.GITHUB_WORKFLOW || '',
+        runId: process.env.GITHUB_RUN_ID || '',
+        runNumber: process.env.GITHUB_RUN_NUMBER || '',
+        job: process.env.GITHUB_JOB || ''
+      }
+    };
+
+    const infraFile = infraFileForCurrentJob()
+    await fs.writeFile(infraFile, JSON.stringify(infraInfo, null, 2));
+    core.info(`Infrastructure information stored in ${infraFile}`);
+  } catch (error) {
+    const err = error as Error;
+    core.warning(`Failed to store infrastructure information: ${err.message}`);
+  }
+}
+
+export function currentJobFileBasename(){
+  return sanitizeFileName(
+    `${github.context.runNumber}-${github.context.workflow}-${github.context.job}`
+  )
+}
+
+export function infraFileForCurrentJob() {
+  const jobFileName = currentJobFileBasename();
+  return path.join(infraDir(), `${jobFileName}.json`);
+}
+
+export async function readInfraForCurrentJob(): Promise<InfrastructureInfo | null> {
+  try {
+    try {
+      const content = await fs.readFile(infraFileForCurrentJob(), 'utf8');
+      return JSON.parse(content) as InfrastructureInfo;
+    } catch (error) {
+      core.debug(`No infrastructure file found at ${infraFileForCurrentJob()}`);
+      return null;
+    }
+  } catch (error) {
+    const err = error as Error;
+    core.warning(`Failed to read infrastructure file: ${err.message}`);
+    return null;
+  }
+}
+
+export function sanitizeFileName(name: string): string {
+  return name
+    .replace(/\//g, '-')    // Replace forward slashes with hyphens
+    .replace(/\s+/g, '-')   // Replace spaces with hyphens
+    .replace(/[^a-zA-Z0-9-]/g, '')  // Remove any characters that aren't alphanumeric or hyphens
+    .toLowerCase();
+}
+
+export async function createInfraDir() {
+  if (!existsSync(infraDir())) {
+    await fs.mkdir(infraDir(), { recursive: true });
+  }
+}
+
