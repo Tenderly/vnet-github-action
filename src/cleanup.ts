@@ -6,36 +6,9 @@ import { buildOutDir, currentJobFileBasename, InfrastructureInfo, readInfraForCu
 import { ParsedDeployments, parseDeploymentLogs } from './foundry-logs';
 import { stopVirtualTestNet } from './tenderly';
 
-interface DeploymentVerification {
-  status: string | null;
-  details: string | null;
-}
-
-interface Deployment {
-  address: string | null;
-  chain: string | null;
-  compiler?: string | null;
-  optimizations?: number | null;
-  contractPath?: string;
-  contractName?: string;
-  guid?: string | null;
-  url?: string | null;
-  verification: DeploymentVerification[];
-}
-
-interface ProcessingResult {
-  generalPath?: string;
-  deployedPath?: string;
-  stats?: {
-    generalLogs: number;
-    deployments: number;
-  };
-  error?: string;
-}
-
 async function cleanup(): Promise<void> {
   try {
-    clearSensitiveData();
+    await clearSensitiveData();
     const mode = core.getInput('mode').toUpperCase();
 
     const infra = await readInfraForCurrentJob();
