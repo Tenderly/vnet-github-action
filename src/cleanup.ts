@@ -6,6 +6,8 @@ import { buildOutDir, currentJobFileBasename, InfrastructureInfo, readInfraForCu
 import { ParsedDeployments, parseDeploymentLogs } from './foundry-logs';
 import { stopVirtualTestNet } from './tenderly';
 
+cleanup();
+
 async function cleanup(): Promise<void> {
   try {
     await clearSensitiveData();
@@ -68,8 +70,6 @@ async function testnetLinks() {
   }).join("\n");
 }
 
-cleanup();
-
 async function persistDeployment(deploymentLogs: ParsedDeployments) {
   await fs.writeFile(`${buildOutDir()}/${currentJobFileBasename()}-deployments.json`, JSON.stringify(deploymentLogs, null, 2), 'utf-8');
 }
@@ -77,7 +77,7 @@ async function persistDeployment(deploymentLogs: ParsedDeployments) {
 async function persistDeploymentInfo() {
   const deploymentInfo = await parseDeploymentLogs(tmpBuildOutDir());
   // remove tmp out dir after parsing - no need for that anymore
-  fs.rm(tmpBuildOutDir(), { recursive: true });
+  await fs.rm(tmpBuildOutDir(), { recursive: true });
   // persist only if there are deployments present
   if (deploymentInfo.deployments.length > 0) {
     core.debug(JSON.stringify(deploymentInfo, null, 2));
