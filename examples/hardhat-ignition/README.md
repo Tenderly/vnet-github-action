@@ -33,7 +33,7 @@ Extend your `package.json` with separate deployment scripts for each network:
 {
   scripts: {
     "deploy:1": "yes | npx hardhat ignition deploy ./ignition/modules/CounterMainnet.ts --network tenderly_1",
-    "deploy:137": "yes | npx hardhat ignition deploy ./ignition/modules/CounterPolygon.ts --network tenderly_137",
+    "deploy:8453": "yes | npx hardhat ignition deploy ./ignition/modules/CounterBase.ts --network tenderly_8453",
   }
 }
 ```
@@ -127,7 +127,7 @@ jobs:
         run: npm run deploy:1 -- --deployment-id deploy-1-${BUILD_SLUG}
         working-directory: examples/hardhat-ignition
 
-      - name: Deploy Contracts Polygon
-        run: npm run deploy:137 -- --deployment-id deploy-137-${BUILD_SLUG}
+      - name: Deploy Contracts Base
+        run: npm run deploy:8453 -- --deployment-id deploy-8453-${BUILD_SLUG}
         working-directory: examples/hardhat-ignition
 ```
