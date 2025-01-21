@@ -1,8 +1,8 @@
 import * as core from '@actions/core';
 import axios from 'axios';
-import path from 'path';
-import os from 'os';
 import fs from 'fs/promises';
+import os from 'os';
+import path from 'path';
 import { TenderlyApiResponse, TestNetResponse } from './types';
 
 const API_BASE_URL = 'https://api.tenderly.co/api/v1';
@@ -153,10 +153,6 @@ async function stopVirtualTestNet(inputs: StopTestNetInputs): Promise<any> {
 }
 
 export {
-  createVirtualTestNet,
-  stopVirtualTestNet,
-  setupTenderlyConfig,
-  TestNetInputs,
-  TestNetResponse,
-  StopTestNetInputs
+  createVirtualTestNet, setupTenderlyConfig, StopTestNetInputs, stopVirtualTestNet, TestNetInputs,
+  TestNetResponse
 };

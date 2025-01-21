@@ -1,7 +1,7 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
+import { createInfraDir, NetworkInfo, setupDeploymentsFolder, storeInfrastructureInfo, tmpBuildOutDir } from './deployment-info';
 import { createVirtualTestNet, setupTenderlyConfig } from './tenderly';
-import { createInfraDir, infraFileForCurrentJob, NetworkInfo, setupDeploymentsFolder, storeInfrastructureInfo, tmpBuildOutDir } from './deployment-info';
 import { TestNetInputs } from './types';
 
 /**
