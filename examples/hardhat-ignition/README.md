@@ -17,9 +17,9 @@ For multi-chain deployments, extend `hardhat.config.ts` with all the networks yo
       url: process.env.TENDERLY_ADMIN_RPC_URL_1 || "",
       chainId: parseInt(process.env.TENDERLY_CHAIN_ID_1 || "-1"),
     },
-    tenderly_137: {
-      url: process.env.TENDERLY_ADMIN_RPC_URL_137 || "",
-      chainId: parseInt(process.env.TENDERLY_CHAIN_ID_137 || "-1"),
+    tenderly_8453: {
+      url: process.env.TENDERLY_ADMIN_RPC_URL_8453 || "",
+      chainId: parseInt(process.env.TENDERLY_CHAIN_ID_8453 || "-1"),
     },
   },
 }
@@ -113,7 +113,7 @@ jobs:
           testnet_name: "Staging"
           network_id: |
             1
-            137
+            8453
           chain_id_prefix: ""
           public_explorer: true
           verification_visibility: 'src'
