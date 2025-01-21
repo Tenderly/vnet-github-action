@@ -63,8 +63,8 @@ jobs:
           testnet_name: 'CI Test Network'
           network_id: |
             1
-            137
-          chain_id_prefix: 7357  # Results in chain IDs 73571, 7357137
+            8453
+          chain_id_prefix: 7357  # Results in chain IDs 73571, 73578453
           public_explorer: true
           verification_visibility: 'src'
           state_sync: true
@@ -120,8 +120,8 @@ ID).
 | `TENDERLY_FOUNDRY_VERIFICATION_URL_{network_id}` | [Foundry verification](https://docs.tenderly.co/virtual-testnets/smart-contract-frameworks/foundry#verification) URL |
 | `BUILD_OUTPUT_FILE_{network_id}`                 | Build output file path                                                                                               |
 
-For example, if you're provisioning Virtual TestNets for Ethereum Mainnet (network ID `1`) and Polygon (network ID
-`137`), you'll get the public RPC by accessing `$TENDERLY_PUBLIC_RPC_URL_1`.
+For example, if you're provisioning Virtual TestNets for Ethereum Mainnet (network ID `1`) and Base (network ID
+`8453`), you'll get the public RPC by accessing `$TENDERLY_PUBLIC_RPC_URL_1`.
 
 ### Global Variables
 
