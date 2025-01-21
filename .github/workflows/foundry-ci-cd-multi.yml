@@ -59,19 +59,15 @@ jobs:
             --verify \
             --json > $BUILD_OUTPUT_FILE_1
 
-      - name: Fund Deployer Account on Polygon
+      - name: Fund Deployer Account on Base
         run: |
           source ../../fixtures/load-fixtures.sh
           update_foundry_config_and_build $TENDERLY_ACCESS_KEY $TENDERLY_FOUNDRY_VERIFICATION_URL_8453  $TENDERLY_CHAIN_ID_8453
           set_wallet_balance $TENDERLY_ADMIN_RPC_URL_8453 ${{ vars.DEPLOYER_WALLET_ADDRESS }} $HUNDRED_ETH
 
-      - name: Deploy Contracts Polygon
+      - name: Deploy Contracts Base
         working-directory: ./examples/foundry
         run: |
-          source ../../fixtures/load-fixtures.sh
-          update_foundry_config_and_build $TENDERLY_ACCESS_KEY $TENDERLY_FOUNDRY_VERIFICATION_URL_8453 $TENDERLY_CHAIN_ID_8453
-          set_wallet_balance $TENDERLY_ADMIN_RPC_URL_8453 ${{ vars.DEPLOYER_WALLET_ADDRESS }} $HUNDRED_ETH
-
           forge script script/Counter.s.sol \
             --private-key ${{ secrets.DEPLOYER_PRIVATE_KEY }} \
             --rpc-url ${{ env.TENDERLY_PUBLIC_RPC_URL_8453 }} \
