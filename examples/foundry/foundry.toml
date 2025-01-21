@@ -6,5 +6,5 @@ cbor_metadata = true
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
 
 [etherscan]
-## placeholders must be replaced with key ("string"), chain_id (number), and tenderly_foundry_verification_url ("string")
-unknown_chain = { key = "O1Us9aUirXqCfHf81hS8MD7-0McDd4EX", chain = 7357137, url = "https://virtual.mainnet.rpc.tenderly.co/b3c1f1a7-4f60-4061-b98c-2c0874f217d3/verify/etherscan" }
+## placeholders must be replaced with API key ("string"), chain_id (number), and tenderly_foundry_verification_url ("string")
+unknown_chain = { key = "${TENDERLY_ACCESS_KEY}", chain = 0, url = "${TENDERLY_FOUNDRY_VERIFICATION_URL}" }
