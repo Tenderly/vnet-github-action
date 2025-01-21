@@ -31,7 +31,7 @@ jobs:
           testnet_name: "Staging"
           network_id: | 
             1
-            137
+            8453
           chain_id_prefix: 7357
           public_explorer: true
           verification_visibility: 'src'
@@ -62,22 +62,22 @@ jobs:
       - name: Fund Deployer Account on Polygon
         run: |
           source ../../fixtures/load-fixtures.sh
-          update_foundry_config_and_build $TENDERLY_ACCESS_KEY $TENDERLY_FOUNDRY_VERIFICATION_URL_137  $TENDERLY_CHAIN_ID_137
-          set_wallet_balance $TENDERLY_ADMIN_RPC_URL_137 ${{ vars.DEPLOYER_WALLET_ADDRESS }} $HUNDRED_ETH
+          update_foundry_config_and_build $TENDERLY_ACCESS_KEY $TENDERLY_FOUNDRY_VERIFICATION_URL_8453  $TENDERLY_CHAIN_ID_8453
+          set_wallet_balance $TENDERLY_ADMIN_RPC_URL_8453 ${{ vars.DEPLOYER_WALLET_ADDRESS }} $HUNDRED_ETH
 
       - name: Deploy Contracts Polygon
         working-directory: ./examples/foundry
         run: |
           source ../../fixtures/load-fixtures.sh
-          update_foundry_config_and_build $TENDERLY_ACCESS_KEY $TENDERLY_FOUNDRY_VERIFICATION_URL_137 $TENDERLY_CHAIN_ID_137
-          set_wallet_balance $TENDERLY_ADMIN_RPC_URL_137 ${{ vars.DEPLOYER_WALLET_ADDRESS }} $HUNDRED_ETH
+          update_foundry_config_and_build $TENDERLY_ACCESS_KEY $TENDERLY_FOUNDRY_VERIFICATION_URL_8453 $TENDERLY_CHAIN_ID_8453
+          set_wallet_balance $TENDERLY_ADMIN_RPC_URL_8453 ${{ vars.DEPLOYER_WALLET_ADDRESS }} $HUNDRED_ETH
 
           forge script script/Counter.s.sol \
             --private-key ${{ secrets.DEPLOYER_PRIVATE_KEY }} \
-            --rpc-url ${{ env.TENDERLY_PUBLIC_RPC_URL_137 }} \
-            --verifier-url ${{ env.TENDERLY_FOUNDRY_VERIFICATION_URL_137 }} \
+            --rpc-url ${{ env.TENDERLY_PUBLIC_RPC_URL_8453 }} \
+            --verifier-url ${{ env.TENDERLY_FOUNDRY_VERIFICATION_URL_8453 }} \
             --etherscan-api-key $TENDERLY_ACCESS_KEY \
             --slow \
             --broadcast \
             --verify \
-            --json > $BUILD_OUTPUT_FILE_137
+            --json > $BUILD_OUTPUT_FILE_8453
