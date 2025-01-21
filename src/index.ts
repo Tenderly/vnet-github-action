@@ -135,7 +135,7 @@ async function run(): Promise<void> {
           networkId,
           chainId: networkInputs.chainId,
           testnetSlug: networkInputs.testnetSlug || '',
-          explorerUrl: inputs.publicExplorer ? `https://dashboard.tenderly.co/${inputs.accountName}/${inputs.projectName}/testnet/${testNet.id}` : undefined
+          explorerUrl: inputs.publicExplorer ? `https://dashboard.tenderly.co/explorer/vnet/${testNet.id}/transactions` : undefined
         };
 
         // export relevant network variables
