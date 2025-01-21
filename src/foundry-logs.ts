@@ -1,6 +1,6 @@
+import * as github from '@actions/github';
 import { promises as fs } from 'fs';
 import path from 'path';
-import * as github from '@actions/github';
 import { readInfraForCurrentJob } from './deployment-info';
 
 interface WorkflowInfo {
@@ -141,10 +141,6 @@ async function parseDeploymentLogs(tmpDirPath: string): Promise<ParsedDeployment
 }
 
 export {
-  parseDeploymentLogs,
-  ParsedDeployments,
-  DeploymentGroup,
-  Contract,
-  VirtualTestNet,
+  Contract, DeploymentGroup, ParsedDeployments, parseDeploymentLogs, VirtualTestNet,
   WorkflowInfo
 };

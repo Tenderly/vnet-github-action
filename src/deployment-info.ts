@@ -1,17 +1,16 @@
-import { existsSync } from 'fs';
-import * as io from '@actions/io';
 import * as core from '@actions/core';
-import { promises as fs } from 'fs';
+import * as github from '@actions/github';
+import * as io from '@actions/io';
+import { existsSync, promises as fs } from 'fs';
 import path from 'path';
 import { TestNetResponse } from './types';
-import * as github from '@actions/github';
 
 export const deploymentsDir = path.join(process.env.GITHUB_WORKSPACE || "", '/.tenderly');
 export const tmpBuildOutDir = (): string => path.join(deploymentsDir, 'tmp');
 export const buildOutDir = (): string => deploymentsDir;
 export const infraDir = () => path.join(deploymentsDir, "infra");
 
-interface InfrastructureInfo {
+export interface InfrastructureInfo {
   networks: Record<string, NetworkInfo>;
   timestamp: string;
   githubContext: {
