@@ -73,10 +73,8 @@ jobs:
 
 ## Examples
 
-Explore [hardhat-ignition](examples/hardhat-ignition/README.md) and [foundry](examples/foundry/README.md) CI setup in
-more detail.
-For more details, explore the [CI with hardhat](https://docs.tenderly.co/virtual-testnets/ci-cd/github-actions-hardhat)
-and [CI with Foundry](https://docs.tenderly.co/virtual-testnets/ci-cd/github-actions-foundry) guides.
+Explore [hardhat-ignition](examples/hardhat-ignition/README.md) and [foundry](examples/foundry/README.md) CI setup in more detail.
+For more details, explore the [CI with hardhat](https://docs.tenderly.co/virtual-testnets/ci-cd/github-actions-hardhat) and [CI with Foundry](https://docs.tenderly.co/virtual-testnets/ci-cd/github-actions-foundry) guides.
 
 ## Configuration Options
 
