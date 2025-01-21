@@ -13,7 +13,7 @@ const config: HardhatUserConfig = {
       url: process.env.TENDERLY_ADMIN_RPC_URL_1 || "",
       chainId: parseInt(process.env.TENDERLY_CHAIN_ID_1 || "-1"),
     },
-    tenderly_137: {
+    tenderly_8453: {
       url: process.env.TENDERLY_ADMIN_RPC_URL_137 || "",
       chainId: parseInt(process.env.TENDERLY_CHAIN_ID_137 || "-1"),
     },
