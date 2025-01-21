@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "deploy:1": "yes | npx hardhat ignition deploy ./ignition/modules/CounterMainnet.ts --network tenderly_1",
-    "deploy:137": "yes | npx hardhat ignition deploy ./ignition/modules/CounterPolygon.ts --network tenderly_137",
+    "deploy:8453": "yes | npx hardhat ignition deploy ./ignition/modules/CounterPolygon.ts --network tenderly_8453",
     "test:1": "hardhat test --network tenderly_1"
   },
   "keywords": [],
