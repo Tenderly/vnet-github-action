@@ -55,6 +55,7 @@ jobs:
             --verifier-url ${{ env.TENDERLY_FOUNDRY_VERIFICATION_URL_1 }} \
             --etherscan-api-key $TENDERLY_ACCESS_KEY \
             --slow \
+            --broadcast \
             --verify \
             --json > $BUILD_OUTPUT_FILE_1
 
@@ -73,5 +74,6 @@ jobs:
             --verifier-url ${{ env.TENDERLY_FOUNDRY_VERIFICATION_URL_8453 }} \
             --etherscan-api-key $TENDERLY_ACCESS_KEY \
             --slow \
+            --broadcast \
             --verify \
             --json > $BUILD_OUTPUT_FILE_8453
