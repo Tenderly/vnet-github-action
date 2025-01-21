@@ -1,0 +1,67 @@
+[
+  {
+    "address": null,
+    "chain": null,
+    "verification": []
+  },
+  {
+    "address": "0x3FC96CD4B3d3AD56B1ce7Bf39E9b80f29Dbe1e42",
+    "chain": "73571",
+    "verification": [
+      {
+        "status": "OK",
+        "details": "Pass - Verified"
+      }
+    ],
+    "compiler": "0.8.28",
+    "optimizations": 200,
+    "contractPath": "src/Counter.sol",
+    "contractName": "Counter",
+    "guid": "0x3fc96cd4b3d3ad56b1ce7bf39e9b80f29dbe1e42"
+  },
+  {
+    "address": "0xEC71AF18807f49E666FD0bda9927Fda43F6c0458",
+    "chain": "73571",
+    "verification": [
+      {
+        "status": "OK",
+        "details": "Pass - Verified"
+      }
+    ],
+    "compiler": "0.8.28",
+    "optimizations": 200,
+    "contractPath": "src/Counter.sol",
+    "contractName": "Counter",
+    "guid": "0xec71af18807f49e666fd0bda9927fda43f6c0458"
+  },
+  {
+    "address": "0x95Df163f4662960d39Ce1a39E225E7f5f71e80A7",
+    "chain": "73571",
+    "verification": [
+      {
+        "status": "OK",
+        "details": "Pass - Verified"
+      }
+    ],
+    "compiler": "0.8.28",
+    "optimizations": 200,
+    "contractPath": "src/Counter.sol",
+    "contractName": "Counter",
+    "guid": "0x95df163f4662960d39ce1a39e225e7f5f71e80a7"
+  },
+  {
+    "address": "0x0EF0A5486fE156f549B85f11Dbe34CaE99345acd",
+    "chain": "73571",
+    "verification": [
+      {
+        "status": "OK",
+        "details": "Pass - Verified"
+      }
+    ],
+    "compiler": "0.8.28",
+    "optimizations": 200,
+    "contractPath": "src/Counter.sol",
+    "contractName": "Counter",
+    "guid": "0x0ef0a5486fe156f549b85f11dbe34cae99345acd"
+  }
+]
