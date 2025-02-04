@@ -41,6 +41,63 @@ Extend your `package.json` with separate deployment scripts for each network:
 > [!TIP] Pass `deployment-id` from action definition
 > Hardhat-Ignition requires a deploument ID. For repeated deployments, provide unique `deployment-id` from the action definition.
 
+## Extend HardhatUserConfig
+
+To enable verification, the Hardhat config object must be extended with the following:
+- `etherscan` object, enabling smart contract verification. Include `customChains` with `apiUrl` pointing to [Tenderly's verification URL](https://docs.tenderly.co/contract-verification/foundry#verification-url)
+- `tenderly` object, with information about the user and project
+
+```
+import { HardhatUserConfig } from 'hardhat/config';
+import '@nomicfoundation/hardhat-toolbox';
+import '@tenderly/hardhat-tenderly';
+
+import * as dotenv from 'dotenv';
+
+dotenv.config();
+
+const config: HardhatUserConfig = {
+  solidity: '0.8.27',
+  networks: {
+    tenderly_1: {
+      url: process.env.TENDERLY_ADMIN_RPC_URL_1 || "",
+      chainId: parseInt(process.env.TENDERLY_CHAIN_ID_1 || "-1"),
+    },
+    tenderly_8453: {
+      url: process.env.TENDERLY_ADMIN_RPC_URL_8453 || "",
+      chainId: parseInt(process.env.TENDERLY_CHAIN_ID_8453 || "-1"),
+    },
+  },
+  etherscan: {
+    apiKey: {
+      tenderly_1: process.env.TENDERLY_ACCESS_KEY!,
+      tenderly_8453: process.env.TENDERLY_ACCESS_KEY!,
+    },
+    customChains: [
+      {
+        network: 'tenderly_ci',
+        chainId: parseInt(process.env.TENDERLY_CHAIN_ID!),
+        urls: {
+          apiURL: `${process.env.TENDERLY_ADMIN_RPC_URL}/verify/etherscan`,
+          browserURL: process.env.TENDERLY_ADMIN_RPC_URL!,
+        },
+      },
+    ],
+  },
+  tenderly: {
+    project: process.env.TENDERLY_PROJECT_NAME!,
+    username: process.env.TENDERLY_ACCOUNT_NAME!,
+    accessKey: process.env.TENDERLY_ACCESS_KEY!,
+  },
+  sourcify: {
+    enabled: false,
+  },
+};
+
+export default config;
+
+```
+
 ## Configure the Github Action
 
 Notes:
