@@ -20,7 +20,8 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
-      tenderly_ci: process.env.TENDERLY_ACCESS_KEY!,
+      tenderly_1: process.env.TENDERLY_ACCESS_KEY!,
+      tenderly_8453: process.env.TENDERLY_ACCESS_KEY!,
     },
     customChains: [
       {

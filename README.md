@@ -182,6 +182,7 @@ gh secret set DEPLOYER_PRIVATE_KEY --body "${TENDERLY_PROJECT_NAME}"
 2. Enable `public_explorer` and set `verification_visibility` to `'src'` for more debugging information
 3. In CD mode, use `push_on_complete` to maintain deployment history
 4. Structure your workflow to use CI mode for tests and CD mode for staging environments
+5. For Foundry deployments with `forge script`, make sure to use the [`--slow` flag](https://book.getfoundry.sh/reference/forge/forge-script?highlight=--slow#options) to ensure verification succeeds
 
 ## License
 
