@@ -18,7 +18,7 @@ jobs:
          cache: 'npm'
 
      - name: Setup Virtual TestNet
-       uses: tenderly/vnet-github-action@v1.0.14
+       uses: ./
        with:
          mode: CI    # pauses testnet after deployment
          access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
@@ -54,7 +54,7 @@ jobs:
           cache: 'npm'
       
       - name: Setup Virtual TestNet
-        uses: tenderly/vnet-github-action@v1.0.14
+        uses: ./
         with:
           mode: CD
           access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}

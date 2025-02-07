@@ -33466,11 +33466,12 @@ const exec = __importStar(__nccwpck_require__(5236));
 const github = __importStar(__nccwpck_require__(3228));
 const fs_1 = __nccwpck_require__(9896);
 const deployment_info_1 = __nccwpck_require__(7905);
-const tenderly_1 = __nccwpck_require__(7450);
 const foundry_logs_1 = __nccwpck_require__(2636);
+const tenderly_1 = __nccwpck_require__(7450);
+cleanup();
 async function cleanup() {
     try {
-        clearSensitiveData();
+        await clearSensitiveData();
         const mode = core.getInput('mode').toUpperCase();
         const infra = await (0, deployment_info_1.readInfraForCurrentJob)();
         if (!infra) {
@@ -33478,36 +33479,15 @@ async function cleanup() {
             return;
         }
         if (mode === 'CD') {
-            core.info('Running in CD mode - skipping TestNet cleanup');
-            const deploymentInfo = await (0, foundry_logs_1.parseDeploymentLogs)((0, deployment_info_1.tmpBuildOutDir)());
-            // remove tmp out dir after parsing - no need for that anymore
-            fs_1.promises.rm((0, deployment_info_1.tmpBuildOutDir)(), { recursive: true });
-            await persistDeployment(deploymentInfo);
+            core.info('Running in CD mode - persisting deployment info');
+            await persistDeploymentInfo();
+            // push foundry deployment info in .tenderly./ or hardhat-ignition + all the files frameworks produced
             await push();
             core.info("Keeping containers ON in CD mode");
-            return;
         }
-        const baseInputs = {
-            accessKey: core.getInput('access_key'),
-            projectName: process.env.TENDERLY_PROJECT_NAME || '',
-            accountName: process.env.TENDERLY_ACCOUNT_NAME || '',
-        };
-        await Promise.allSettled(Object.values(infra.networks).map(async (network) => {
-            try {
-                await (0, tenderly_1.stopVirtualTestNet)({
-                    ...baseInputs,
-                    testnetId: network.id
-                });
-                core.info(`Stopped Virtual TestNet ${network.id} for network ${network.networkId}`);
-                return network.id;
-            }
-            catch (error) {
-                const err = error;
-                core.warning(`Failed to stop TestNet ${network.id}: ${err.message}`);
-                throw error;
-            }
-        }));
-        core.info('Virtual TestNet stopped successfully');
+        if (mode === 'CI') {
+            await pauseVirtualTestNet(infra);
+        }
     }
     catch (error) {
         const err = error;
@@ -33515,7 +33495,9 @@ async function cleanup() {
     }
 }
 async function clearSensitiveData() {
-    return await exec.exec('git', ['checkout', '--', '**/foundry.toml']);
+    core.debug("Clearing sensitive data: admin RPC etc");
+    // reset all foundry.toml files
+    await exec.exec('git', ['ls-files', '**/foundry.toml', '|', 'xargs', 'git', 'checkout', '--']);
 }
 async function push() {
     const pushOnComplete = core.getBooleanInput('push_on_complete');
@@ -33537,12 +33519,44 @@ async function push() {
 async function testnetLinks() {
     const networks = (await (0, deployment_info_1.readInfraForCurrentJob)())?.networks;
     return Object.values(networks).map(m => {
-        return `${m.chainId}: ${m.adminRpcUrl}`;
+        return `${m.chainId}: ${m.publicRpcUrl}`;
     }).join("\n");
 }
-cleanup();
 async function persistDeployment(deploymentLogs) {
     await fs_1.promises.writeFile(`${(0, deployment_info_1.buildOutDir)()}/${(0, deployment_info_1.currentJobFileBasename)()}-deployments.json`, JSON.stringify(deploymentLogs, null, 2), 'utf-8');
+}
+async function persistDeploymentInfo() {
+    const deploymentInfo = await (0, foundry_logs_1.parseDeploymentLogs)((0, deployment_info_1.tmpBuildOutDir)());
+    // remove tmp out dir after parsing - no need for that anymore
+    await fs_1.promises.rm((0, deployment_info_1.tmpBuildOutDir)(), { recursive: true });
+    // persist only if there are deployments present
+    if (deploymentInfo.deployments.length > 0) {
+        core.debug(JSON.stringify(deploymentInfo, null, 2));
+        await persistDeployment(deploymentInfo);
+    }
+}
+async function pauseVirtualTestNet(infra) {
+    const baseInputs = {
+        accessKey: core.getInput('access_key'),
+        projectName: process.env.TENDERLY_PROJECT_NAME || '',
+        accountName: process.env.TENDERLY_ACCOUNT_NAME || '',
+    };
+    await Promise.allSettled(Object.values(infra.networks).map(async (network) => {
+        try {
+            await (0, tenderly_1.stopVirtualTestNet)({
+                ...baseInputs,
+                testnetId: network.id
+            });
+            core.info(`Stopped Virtual TestNet ${network.id} for network ${network.networkId}`);
+            return network.id;
+        }
+        catch (error) {
+            const err = error;
+            core.warning(`Failed to stop TestNet ${network.id}: ${err.message}`);
+            throw error;
+        }
+    }));
+    core.info('Virtual TestNet stopped successfully');
 }
 
 
@@ -33598,32 +33612,31 @@ exports.infraFileForCurrentJob = infraFileForCurrentJob;
 exports.readInfraForCurrentJob = readInfraForCurrentJob;
 exports.sanitizeFileName = sanitizeFileName;
 exports.createInfraDir = createInfraDir;
-const fs_1 = __nccwpck_require__(9896);
-const io = __importStar(__nccwpck_require__(4994));
 const core = __importStar(__nccwpck_require__(7484));
-const fs_2 = __nccwpck_require__(9896);
-const path_1 = __importDefault(__nccwpck_require__(6928));
 const github = __importStar(__nccwpck_require__(3228));
-exports.deploymentsDir = path_1.default.join(process.env.GITHUB_WORKSPACE || "", '/.tenderly');
+const io = __importStar(__nccwpck_require__(4994));
+const fs_1 = __nccwpck_require__(9896);
+const path_1 = __importDefault(__nccwpck_require__(6928));
+exports.deploymentsDir = path_1.default.join(process.env.GITHUB_WORKSPACE || '', '/.tenderly');
 const tmpBuildOutDir = () => path_1.default.join(exports.deploymentsDir, 'tmp');
 exports.tmpBuildOutDir = tmpBuildOutDir;
 const buildOutDir = () => exports.deploymentsDir;
 exports.buildOutDir = buildOutDir;
-const infraDir = () => path_1.default.join(exports.deploymentsDir, "infra");
+const infraDir = () => path_1.default.join(exports.deploymentsDir, 'infra');
 exports.infraDir = infraDir;
 async function setupDeploymentsFolder() {
     const tmpDir = (0, exports.tmpBuildOutDir)();
     if (!(0, fs_1.existsSync)(tmpDir)) {
         await io.mkdirP(tmpDir);
-        core.info("TMP deployment folder " + tmpDir);
+        core.info('TMP deployment folder ' + tmpDir);
     }
     // Ensure .tenderly directory exists
     const tenderlyDir = path_1.default.join(process.env.GITHUB_WORKSPACE || '', '.tenderly');
     if (!(0, fs_1.existsSync)(tenderlyDir)) {
         await io.mkdirP(tenderlyDir);
-        core.info("Created .tenderly folder");
+        core.info('Created .tenderly folder');
     }
-    core.info("Created deployments folder " + exports.deploymentsDir);
+    core.info('Created deployments folder ' + exports.deploymentsDir);
 }
 async function storeInfrastructureInfo(networks) {
     try {
@@ -33634,11 +33647,11 @@ async function storeInfrastructureInfo(networks) {
                 workflow: process.env.GITHUB_WORKFLOW || '',
                 runId: process.env.GITHUB_RUN_ID || '',
                 runNumber: process.env.GITHUB_RUN_NUMBER || '',
-                job: process.env.GITHUB_JOB || ''
-            }
+                job: process.env.GITHUB_JOB || '',
+            },
         };
         const infraFile = infraFileForCurrentJob();
-        await fs_2.promises.writeFile(infraFile, JSON.stringify(infraInfo, null, 2));
+        await fs_1.promises.writeFile(infraFile, JSON.stringify(infraInfo, null, 2));
         core.info(`Infrastructure information stored in ${infraFile}`);
     }
     catch (error) {
@@ -33656,7 +33669,7 @@ function infraFileForCurrentJob() {
 async function readInfraForCurrentJob() {
     try {
         try {
-            const content = await fs_2.promises.readFile(infraFileForCurrentJob(), 'utf8');
+            const content = await fs_1.promises.readFile(infraFileForCurrentJob(), 'utf8');
             return JSON.parse(content);
         }
         catch (error) {
@@ -33679,7 +33692,7 @@ function sanitizeFileName(name) {
 }
 async function createInfraDir() {
     if (!(0, fs_1.existsSync)((0, exports.infraDir)())) {
-        await fs_2.promises.mkdir((0, exports.infraDir)(), { recursive: true });
+        await fs_1.promises.mkdir((0, exports.infraDir)(), { recursive: true });
     }
 }
 
@@ -33729,9 +33742,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.parseDeploymentLogs = parseDeploymentLogs;
+const github = __importStar(__nccwpck_require__(3228));
 const fs_1 = __nccwpck_require__(9896);
 const path_1 = __importDefault(__nccwpck_require__(6928));
-const github = __importStar(__nccwpck_require__(3228));
 const deployment_info_1 = __nccwpck_require__(7905);
 function extractRunNumber(filename) {
     const match = filename.match(/^(\d+)-/);
@@ -33869,13 +33882,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.createVirtualTestNet = createVirtualTestNet;
-exports.stopVirtualTestNet = stopVirtualTestNet;
 exports.setupTenderlyConfig = setupTenderlyConfig;
+exports.stopVirtualTestNet = stopVirtualTestNet;
 const core = __importStar(__nccwpck_require__(7484));
 const axios_1 = __importDefault(__nccwpck_require__(7269));
-const path_1 = __importDefault(__nccwpck_require__(6928));
-const os_1 = __importDefault(__nccwpck_require__(857));
 const promises_1 = __importDefault(__nccwpck_require__(1943));
+const os_1 = __importDefault(__nccwpck_require__(857));
+const path_1 = __importDefault(__nccwpck_require__(6928));
 const API_BASE_URL = 'https://api.tenderly.co/api/v1';
 async function createVirtualTestNet(inputs) {
     try {

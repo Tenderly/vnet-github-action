@@ -2,7 +2,7 @@ import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as github from '@actions/github';
 import { promises as fs } from 'fs';
-import { buildOutDir, currentJobFileBasename, InfrastructureInfo, readInfraForCurrentJob, tmpBuildOutDir } from './deployment-info';
+import { buildOutDir, currentJobFileBasename, infraFileForCurrentJob, InfrastructureInfo, readInfraForCurrentJob, tmpBuildOutDir } from './deployment-info';
 import { ParsedDeployments, parseDeploymentLogs } from './foundry-logs';
 import { stopVirtualTestNet } from './tenderly';
 
@@ -37,7 +37,9 @@ async function cleanup(): Promise<void> {
 }
 
 async function clearSensitiveData() {
-  return await exec.exec('git', ['checkout', '--', '**/foundry.toml']);
+  core.debug("Clearing sensitive data: admin RPC etc");
+  // reset all foundry.toml files
+  await exec.exec('git', ['ls-files', '**/foundry.toml', '|', 'xargs', 'git', 'checkout', '--']);
 }
 
 async function push(): Promise<void> {
@@ -66,7 +68,7 @@ async function testnetLinks() {
   const networks = (await readInfraForCurrentJob())?.networks;
 
   return Object.values(networks!).map(m => {
-    return `${m.chainId}: ${m.adminRpcUrl}`
+    return `${m.chainId}: ${m.publicRpcUrl}`
   }).join("\n");
 }
 
