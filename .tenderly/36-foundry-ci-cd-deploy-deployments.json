@@ -1,0 +1,106 @@
+{
+  "workflow": {
+    "runNumber": 36,
+    "workflow": "Foundry CI/CD",
+    "job": "deploy",
+    "runId": 13202329026
+  },
+  "deployments": [
+    {
+      "virtualTestNet": {
+        "id": "7db34ef4-626d-4e06-8ae1-0e604652b100",
+        "publicRpcUrl": "https://virtual.mainnet.rpc.tenderly.co/3db2d64e-3475-4d5f-a3cf-f609e1efc278",
+        "networkId": "1",
+        "chainId": 73571,
+        "testnetSlug": "36-staging-net-1-foundry-ci-cd-deploy-13202329026",
+        "explorerUrl": "https://dashboard.tenderly.co/explorer/vnet/7db34ef4-626d-4e06-8ae1-0e604652b100/transactions"
+      },
+      "contracts": [
+        {
+          "address": "0x3FC96CD4B3d3AD56B1ce7Bf39E9b80f29Dbe1e42",
+          "chain": "73571",
+          "verificationStatus": "OK",
+          "compiler": "0.8.28",
+          "optimizations": 200,
+          "contractPath": "src/Counter.sol",
+          "contractName": "Counter"
+        },
+        {
+          "address": "0xEC71AF18807f49E666FD0bda9927Fda43F6c0458",
+          "chain": "73571",
+          "verificationStatus": "OK",
+          "compiler": "0.8.28",
+          "optimizations": 200,
+          "contractPath": "src/Counter.sol",
+          "contractName": "Counter"
+        },
+        {
+          "address": "0x95Df163f4662960d39Ce1a39E225E7f5f71e80A7",
+          "chain": "73571",
+          "verificationStatus": "OK",
+          "compiler": "0.8.28",
+          "optimizations": 200,
+          "contractPath": "src/Counter.sol",
+          "contractName": "Counter"
+        },
+        {
+          "address": "0x0EF0A5486fE156f549B85f11Dbe34CaE99345acd",
+          "chain": "73571",
+          "verificationStatus": "OK",
+          "compiler": "0.8.28",
+          "optimizations": 200,
+          "contractPath": "src/Counter.sol",
+          "contractName": "Counter"
+        }
+      ]
+    },
+    {
+      "virtualTestNet": {
+        "id": "802340fd-76b1-4a32-a15d-760854fe3582",
+        "publicRpcUrl": "https://virtual.base.rpc.tenderly.co/931a9e23-51af-4a83-9c4c-ce00a4d77c71",
+        "networkId": "8453",
+        "chainId": 73578453,
+        "testnetSlug": "36-staging-net-8453-foundry-ci-cd-deploy-13202329026",
+        "explorerUrl": "https://dashboard.tenderly.co/explorer/vnet/802340fd-76b1-4a32-a15d-760854fe3582/transactions"
+      },
+      "contracts": [
+        {
+          "address": "0x3FC96CD4B3d3AD56B1ce7Bf39E9b80f29Dbe1e42",
+          "chain": "73578453",
+          "verificationStatus": "OK",
+          "compiler": "0.8.28",
+          "optimizations": 200,
+          "contractPath": "src/Counter.sol",
+          "contractName": "Counter"
+        },
+        {
+          "address": "0xEC71AF18807f49E666FD0bda9927Fda43F6c0458",
+          "chain": "73578453",
+          "verificationStatus": "OK",
+          "compiler": "0.8.28",
+          "optimizations": 200,
+          "contractPath": "src/Counter.sol",
+          "contractName": "Counter"
+        },
+        {
+          "address": "0x95Df163f4662960d39Ce1a39E225E7f5f71e80A7",
+          "chain": "73578453",
+          "verificationStatus": "OK",
+          "compiler": "0.8.28",
+          "optimizations": 200,
+          "contractPath": "src/Counter.sol",
+          "contractName": "Counter"
+        },
+        {
+          "address": "0x0EF0A5486fE156f549B85f11Dbe34CaE99345acd",
+          "chain": "73578453",
+          "verificationStatus": "OK",
+          "compiler": "0.8.28",
+          "optimizations": 200,
+          "contractPath": "src/Counter.sol",
+          "contractName": "Counter"
+        }
+      ]
+    }
+  ]
+}

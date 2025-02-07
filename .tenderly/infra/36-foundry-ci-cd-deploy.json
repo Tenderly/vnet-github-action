@@ -1,0 +1,27 @@
+{
+  "networks": {
+    "1": {
+      "id": "7db34ef4-626d-4e06-8ae1-0e604652b100",
+      "publicRpcUrl": "https://virtual.mainnet.rpc.tenderly.co/3db2d64e-3475-4d5f-a3cf-f609e1efc278",
+      "networkId": "1",
+      "chainId": 73571,
+      "testnetSlug": "36-staging-net-1-foundry-ci-cd-deploy-13202329026",
+      "explorerUrl": "https://dashboard.tenderly.co/explorer/vnet/7db34ef4-626d-4e06-8ae1-0e604652b100/transactions"
+    },
+    "8453": {
+      "id": "802340fd-76b1-4a32-a15d-760854fe3582",
+      "publicRpcUrl": "https://virtual.base.rpc.tenderly.co/931a9e23-51af-4a83-9c4c-ce00a4d77c71",
+      "networkId": "8453",
+      "chainId": 73578453,
+      "testnetSlug": "36-staging-net-8453-foundry-ci-cd-deploy-13202329026",
+      "explorerUrl": "https://dashboard.tenderly.co/explorer/vnet/802340fd-76b1-4a32-a15d-760854fe3582/transactions"
+    }
+  },
+  "timestamp": "2025-02-07T14:57:23.261Z",
+  "githubContext": {
+    "workflow": "Foundry CI/CD",
+    "runId": "13202329026",
+    "runNumber": "36",
+    "job": "deploy"
+  }
+}
