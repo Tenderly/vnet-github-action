@@ -7,4 +7,4 @@ cbor_metadata = true
 
 [etherscan]
 ## placeholders must be replaced with API key ("string"), chain_id (number), and tenderly_foundry_verification_url ("string")
-unknown_chain = { key = "O1Us9aUirXqCfHf81hS8MD7-0McDd4EX", chain = 73578453, url = "https://virtual.mainnet.rpc.tenderly.co/ab7b40e4-0536-4ace-acbc-ea26c090f1e6/verify/etherscan" }
+unknown_chain = { key = "${TENDERLY_ACCESS_KEY}", chain = 0, url = "${TENDERLY_FOUNDRY_VERIFICATION_URL}" }

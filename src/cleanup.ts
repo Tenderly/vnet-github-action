@@ -39,7 +39,15 @@ async function cleanup(): Promise<void> {
 async function clearSensitiveData() {
   core.debug("Clearing sensitive data: admin RPC etc");
   // reset all foundry.toml files
-  await exec.exec('git', ['ls-files', '**/foundry.toml', '|', 'xargs', 'git', 'checkout', '--']);
+  // First get list of all foundry.toml files
+  const { stdout } = await exec.getExecOutput('git', ['ls-files', '**/foundry.toml']);
+  // Then checkout each file
+  const files = stdout.trim().split('\n');
+  for (const file of files) {
+    if (file) {
+      await exec.exec('git', ['checkout', '--', file]);
+    }
+  }
 }
 
 async function push(): Promise<void> {
