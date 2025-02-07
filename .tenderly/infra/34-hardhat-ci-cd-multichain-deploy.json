@@ -1,0 +1,29 @@
+{
+  "networks": {
+    "1": {
+      "id": "c4ef7f12-c757-41df-8828-3118976009c5",
+      "adminRpcUrl": "https://virtual.mainnet.rpc.tenderly.co/26866112-826a-4fe7-832c-ee99296b4dcd",
+      "publicRpcUrl": "https://virtual.mainnet.rpc.tenderly.co/9047c222-7d58-48ca-a9de-869e877e3c7b",
+      "networkId": "1",
+      "chainId": 1,
+      "testnetSlug": "34-staging-net-1-hardhat-ci-cd-multichain-deploy-13201840356",
+      "explorerUrl": "https://dashboard.tenderly.co/tenderly/live-demo/testnet/c4ef7f12-c757-41df-8828-3118976009c5"
+    },
+    "8453": {
+      "id": "43fc454e-9ec2-4fa8-889a-20a9e6ea7b84",
+      "adminRpcUrl": "https://virtual.base.rpc.tenderly.co/f4c11529-6adf-45b9-94f4-a72152e5c697",
+      "publicRpcUrl": "https://virtual.base.rpc.tenderly.co/441c32d4-cfe1-4685-923a-b8d6f642c2a0",
+      "networkId": "8453",
+      "chainId": 8453,
+      "testnetSlug": "34-staging-net-8453-hardhat-ci-cd-multichain-deploy-13201840356",
+      "explorerUrl": "https://dashboard.tenderly.co/tenderly/live-demo/testnet/43fc454e-9ec2-4fa8-889a-20a9e6ea7b84"
+    }
+  },
+  "timestamp": "2025-02-07T14:29:28.996Z",
+  "githubContext": {
+    "workflow": "Hardhat CI/CD Multichain",
+    "runId": "13201840356",
+    "runNumber": "34",
+    "job": "deploy"
+  }
+}
