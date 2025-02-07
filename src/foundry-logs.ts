@@ -22,7 +22,6 @@ interface Contract {
 
 interface VirtualTestNet {
   id: string;
-  adminRpcUrl: string;
   publicRpcUrl: string;
   networkId: string;
   chainId: number;

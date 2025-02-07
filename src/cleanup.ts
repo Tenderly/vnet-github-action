@@ -39,16 +39,6 @@ async function cleanup(): Promise<void> {
 async function clearSensitiveData() {
   core.debug("Clearing sensitive data: admin RPC etc");
   await exec.exec('git', ['checkout', '--', '"**/foundry.toml"']);
-  await hideAdminRpc();
-}
-
-async function hideAdminRpc(){
-  const infra = JSON.parse(await fs.readFile(infraFileForCurrentJob(), 'utf8')) as InfrastructureInfo;
-  infra.networks = Object.fromEntries(Object.entries(infra.networks).map(([key, network]) => {
-    network.adminRpcUrl = '';
-    return [key, network];
-  }));
-  await fs.writeFile(infraFileForCurrentJob(), JSON.stringify(infra, null, 2));
 }
 
 async function push(): Promise<void> {

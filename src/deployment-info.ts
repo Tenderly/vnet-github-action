@@ -21,7 +21,10 @@ export interface InfrastructureInfo {
   };
 }
 
-export interface NetworkInfo extends TestNetResponse {
+export interface NetworkInfo {
+  id: string;
+  publicRpcUrl: string;
+
   networkId: string;
   chainId: number;
   testnetSlug: string;
@@ -48,7 +51,7 @@ export async function setupDeploymentsFolder(): Promise<void> {
 export async function storeInfrastructureInfo(networks: Record<string, NetworkInfo>): Promise<void> {
   try {
     const infraInfo: InfrastructureInfo = {
-      networks: sanitizeInfraInfo(networks),
+      networks,
       timestamp: new Date().toISOString(),
       githubContext: {
         workflow: process.env.GITHUB_WORKFLOW || '',
@@ -65,15 +68,6 @@ export async function storeInfrastructureInfo(networks: Record<string, NetworkIn
     const err = error as Error;
     core.warning(`Failed to store infrastructure information: ${err.message}`);
   }
-}
-
-function sanitizeInfraInfo(networks: Record<string, NetworkInfo>) {
-  return Object.fromEntries(
-    Object.entries(networks).map(([key, network]) => {
-      const { adminRpcUrl, ...rest } = network;
-      return [key, rest];
-    }),
-  ) as typeof networks;
 }
 
 export function currentJobFileBasename() {
