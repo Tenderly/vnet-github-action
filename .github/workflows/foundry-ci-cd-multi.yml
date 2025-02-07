@@ -7,7 +7,7 @@ on:
 env:
   TENDERLY_ACCESS_KEY: ${{ secrets.TENDERLY_ACCESS_KEY }}
   DEPLOYER_WALLET_ADDRESS: ${{ vars.DEPLOYER_WALLET_ADDRESS }}
-  DEBUG:  ./
+  DEBUG: Tenderly/vnet-github-action@v1.0.16
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -22,7 +22,7 @@ jobs:
           submodules: recursive
 
       - name: Setup Virtual TestNet
-        uses: ./
+        uses: Tenderly/vnet-github-action@v1.0.16
         with:
           mode: CD
           access_key: ${{ secrets.TENDERLY_ACCESS_KEY }}
