@@ -131,7 +131,8 @@ async function run(): Promise<void> {
 
         // Store network info
         networkInfo[networkId] = {
-          ...testNet,
+          id: testNet.id,
+          publicRpcUrl: testNet.publicRpcUrl,
           networkId,
           chainId: networkInputs.chainId,
           testnetSlug: networkInputs.testnetSlug || '',

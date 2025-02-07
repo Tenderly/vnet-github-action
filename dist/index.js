@@ -33711,7 +33711,8 @@ async function run() {
             const testNet = await (0, tenderly_1.createVirtualTestNet)(networkInputs);
             // Store network info
             networkInfo[networkId] = {
-                ...testNet,
+                id: testNet.id,
+                publicRpcUrl: testNet.publicRpcUrl,
                 networkId,
                 chainId: networkInputs.chainId,
                 testnetSlug: networkInputs.testnetSlug || '',
