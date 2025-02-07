@@ -33472,32 +33472,31 @@ exports.infraFileForCurrentJob = infraFileForCurrentJob;
 exports.readInfraForCurrentJob = readInfraForCurrentJob;
 exports.sanitizeFileName = sanitizeFileName;
 exports.createInfraDir = createInfraDir;
-const fs_1 = __nccwpck_require__(9896);
-const io = __importStar(__nccwpck_require__(4994));
 const core = __importStar(__nccwpck_require__(7484));
-const fs_2 = __nccwpck_require__(9896);
-const path_1 = __importDefault(__nccwpck_require__(6928));
 const github = __importStar(__nccwpck_require__(3228));
-exports.deploymentsDir = path_1.default.join(process.env.GITHUB_WORKSPACE || "", '/.tenderly');
+const io = __importStar(__nccwpck_require__(4994));
+const fs_1 = __nccwpck_require__(9896);
+const path_1 = __importDefault(__nccwpck_require__(6928));
+exports.deploymentsDir = path_1.default.join(process.env.GITHUB_WORKSPACE || '', '/.tenderly');
 const tmpBuildOutDir = () => path_1.default.join(exports.deploymentsDir, 'tmp');
 exports.tmpBuildOutDir = tmpBuildOutDir;
 const buildOutDir = () => exports.deploymentsDir;
 exports.buildOutDir = buildOutDir;
-const infraDir = () => path_1.default.join(exports.deploymentsDir, "infra");
+const infraDir = () => path_1.default.join(exports.deploymentsDir, 'infra');
 exports.infraDir = infraDir;
 async function setupDeploymentsFolder() {
     const tmpDir = (0, exports.tmpBuildOutDir)();
     if (!(0, fs_1.existsSync)(tmpDir)) {
         await io.mkdirP(tmpDir);
-        core.info("TMP deployment folder " + tmpDir);
+        core.info('TMP deployment folder ' + tmpDir);
     }
     // Ensure .tenderly directory exists
     const tenderlyDir = path_1.default.join(process.env.GITHUB_WORKSPACE || '', '.tenderly');
     if (!(0, fs_1.existsSync)(tenderlyDir)) {
         await io.mkdirP(tenderlyDir);
-        core.info("Created .tenderly folder");
+        core.info('Created .tenderly folder');
     }
-    core.info("Created deployments folder " + exports.deploymentsDir);
+    core.info('Created deployments folder ' + exports.deploymentsDir);
 }
 async function storeInfrastructureInfo(networks) {
     try {
@@ -33508,11 +33507,11 @@ async function storeInfrastructureInfo(networks) {
                 workflow: process.env.GITHUB_WORKFLOW || '',
                 runId: process.env.GITHUB_RUN_ID || '',
                 runNumber: process.env.GITHUB_RUN_NUMBER || '',
-                job: process.env.GITHUB_JOB || ''
-            }
+                job: process.env.GITHUB_JOB || '',
+            },
         };
         const infraFile = infraFileForCurrentJob();
-        await fs_2.promises.writeFile(infraFile, JSON.stringify(infraInfo, null, 2));
+        await fs_1.promises.writeFile(infraFile, JSON.stringify(infraInfo, null, 2));
         core.info(`Infrastructure information stored in ${infraFile}`);
     }
     catch (error) {
@@ -33530,7 +33529,7 @@ function infraFileForCurrentJob() {
 async function readInfraForCurrentJob() {
     try {
         try {
-            const content = await fs_2.promises.readFile(infraFileForCurrentJob(), 'utf8');
+            const content = await fs_1.promises.readFile(infraFileForCurrentJob(), 'utf8');
             return JSON.parse(content);
         }
         catch (error) {
@@ -33553,7 +33552,7 @@ function sanitizeFileName(name) {
 }
 async function createInfraDir() {
     if (!(0, fs_1.existsSync)((0, exports.infraDir)())) {
-        await fs_2.promises.mkdir((0, exports.infraDir)(), { recursive: true });
+        await fs_1.promises.mkdir((0, exports.infraDir)(), { recursive: true });
     }
 }
 
@@ -33601,8 +33600,8 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(7484));
 const github = __importStar(__nccwpck_require__(3228));
-const tenderly_1 = __nccwpck_require__(7450);
 const deployment_info_1 = __nccwpck_require__(7905);
+const tenderly_1 = __nccwpck_require__(7450);
 /**
  * Provides a unique build slug for the current run.
  * @returns Build slug
@@ -33716,7 +33715,7 @@ async function run() {
                 networkId,
                 chainId: networkInputs.chainId,
                 testnetSlug: networkInputs.testnetSlug || '',
-                explorerUrl: inputs.publicExplorer ? `https://dashboard.tenderly.co/${inputs.accountName}/${inputs.projectName}/testnet/${testNet.id}` : undefined
+                explorerUrl: inputs.publicExplorer ? `https://dashboard.tenderly.co/explorer/vnet/${testNet.id}/transactions` : undefined
             };
             // export relevant network variables
             exportWithNetworkId('TENDERLY_TESTNET_ID', testNet.id, networkId);
@@ -33797,13 +33796,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.createVirtualTestNet = createVirtualTestNet;
-exports.stopVirtualTestNet = stopVirtualTestNet;
 exports.setupTenderlyConfig = setupTenderlyConfig;
+exports.stopVirtualTestNet = stopVirtualTestNet;
 const core = __importStar(__nccwpck_require__(7484));
 const axios_1 = __importDefault(__nccwpck_require__(7269));
-const path_1 = __importDefault(__nccwpck_require__(6928));
-const os_1 = __importDefault(__nccwpck_require__(857));
 const promises_1 = __importDefault(__nccwpck_require__(1943));
+const os_1 = __importDefault(__nccwpck_require__(857));
+const path_1 = __importDefault(__nccwpck_require__(6928));
 const API_BASE_URL = 'https://api.tenderly.co/api/v1';
 async function createVirtualTestNet(inputs) {
     try {
